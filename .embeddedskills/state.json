@@ -1,0 +1,24 @@
+{
+  "last_build": {
+    "provider": "keil",
+    "action": "build",
+    "project": "USER/LED.uvprojx",
+    "target": "LED",
+    "log_dir": ".embeddedskills/build",
+    "artifacts": {
+      "axf_file": "OBJ/LED.axf",
+      "hex_file": "OBJ/LED.hex",
+      "flash_file": "OBJ/LED.hex",
+      "debug_file": "OBJ/LED.axf",
+      "output_dir": "OBJ",
+      "log_file": ".embeddedskills/build/LED-LED-build.log"
+    },
+    "axf_file": "OBJ/LED.axf",
+    "hex_file": "OBJ/LED.hex",
+    "flash_file": "OBJ/LED.hex",
+    "debug_file": "OBJ/LED.axf",
+    "output_dir": "OBJ",
+    "log_file": ".embeddedskills/build/LED-LED-build.log",
+    "timestamp": "2026-09-16T09:07:33+08:00"
+  }
+}

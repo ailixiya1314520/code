@@ -279,9 +279,9 @@ int main(void)
     OLED_Init();
     OLED_Clear();
 
-    /* DHT11 presence check at boot (data pin PB14) */
+    /* DHT11 presence check at boot (data pin PA11) */
     if (DHT11_Init())
-        printf("DHT11 not detected! check DATA->PB14, VCC, GND\r\n");
+        printf("DHT11 not detected! check DATA->PA11, VCC, GND\r\n");
     else
         printf("DHT11 ok\r\n");
 
@@ -565,7 +565,7 @@ void Get_Data(u16 count)
             if (!dht11Warned)
             {
                 dht11Warned = 1;
-                printf("DHT11 read failed, Temp/Humi frozen (check PB14 wiring)\r\n");
+                printf("DHT11 read failed, Temp/Humi frozen (check PA11 wiring)\r\n");
             }
         }
     }

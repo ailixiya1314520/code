@@ -1,0 +1,7 @@
+{
+  "keil": {
+    "project": "USER/LED.uvprojx",
+    "target": "LED",
+    "log_dir": ".embeddedskills/build"
+  }
+}

@@ -5,14 +5,14 @@
 									  
 //////////////////////////////////////////////////////////////////////////////////
 
-#define DHT11_IO    GPIOB
-#define DHT11_PIN   GPIO_Pin_14
+#define DHT11_IO    GPIOA
+#define DHT11_PIN   GPIO_Pin_11
 //IO方向设置
-#define DHT11_IO_IN()  {DHT11_IO->CRH&=0XF0FFFFFF;DHT11_IO->CRH|=8<<24;}
-#define DHT11_IO_OUT() {DHT11_IO->CRH&=0XF0FFFFFF;DHT11_IO->CRH|=3<<24;}
+#define DHT11_IO_IN()  {DHT11_IO->CRH&=0XFFFF0FFF;DHT11_IO->CRH|=8<<12;}
+#define DHT11_IO_OUT() {DHT11_IO->CRH&=0XFFFF0FFF;DHT11_IO->CRH|=3<<12;}
 ////IO操作函数											   
-#define	DHT11_DQ_OUT PBout(14) //数据端口	PA0 
-#define	DHT11_DQ_IN  PBin(14)  //数据端口	PA0 
+#define	DHT11_DQ_OUT PAout(11) //数据端口	PA0 
+#define	DHT11_DQ_IN  PAin(11)  //数据端口	PA0 
 
 
 u8 DHT11_Init(void);//初始化DHT11
