@@ -14,7 +14,7 @@
 //All rights reserved									  
 ////////////////////////////////////////////////////////////////////////////////// 
 #define LED0 PBout(0)// PB5
-#define BEEP PAout(1)// PA1, 蜂鸣器+脚接PA1/-脚接GND => 高电平触发(PA1=1 通电响, PA1=0 断电停)	
+#define BEEP PAout(1)// PA1, 三引脚有源蜂鸣器I/O脚, 低电平触发(PA1=0 响, PA1=1 停)	
 
 #define BUJ1 PBout(14)	
 #define BUJ2 PAout(12)// PE5	

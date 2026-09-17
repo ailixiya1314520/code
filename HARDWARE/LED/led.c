@@ -27,7 +27,12 @@ void LED_Init(void)
  GPIO_Init(GPIOB, &GPIO_InitStructure);					 //�����趨������ʼ��GPIOB.5
  GPIO_ResetBits(GPIOB,GPIO_Pin_0);						 //PB.5 �����
  
- GPIO_InitStructure.GPIO_Pin =GPIO_Pin_1|GPIO_Pin_3|GPIO_Pin_12|GPIO_Pin_15;				 //LED0-->PB.5 �˿�����
- GPIO_Init(GPIOA, &GPIO_InitStructure);		
+ GPIO_InitStructure.GPIO_Pin =GPIO_Pin_1|GPIO_Pin_3|GPIO_Pin_12|GPIO_Pin_15;				 //LED0-->PB.5 端口配置
+ GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+ /* PA1 蜂鸣器为低电平触发, 初始化立即置高=静音;
+  * 否则上电到进入主循环报警状态机前(尤其 Cloud_Init 阻塞联网期间)
+  * PA1 默认低电平会导致蜂鸣器常响 */
+ GPIO_SetBits(GPIOA, GPIO_Pin_1);
 }
  
