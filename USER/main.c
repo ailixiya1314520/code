@@ -61,8 +61,8 @@ u16 m2_value;                      /* MQ2              */
 u16 m7_value;                      /* MQ7              */
 u16 m135_value;                     /* MQ135            */
 
-u16 A_DHT11_Temp = 35;      /* thresholds */
-u16 A_DHT11_Hum  = 20;
+u16 A_DHT11_Temp = 99;      /* thresholds */
+u16 A_DHT11_Hum  = 99;
 u16 A_pre        = 1500;
 u16 A_gz_value   = 1000;
 u16 A_m2_value   = 3500;
@@ -309,16 +309,57 @@ int main(void)
             last_curtain_flag = curtain_flag;
         }
 
-        /* ---- alarm ---- */
-        if (DHT11_Temp >= A_DHT11_Temp || DHT11_Hum <= A_DHT11_Hum ||
-            Pre >= A_pre || m135_value <= A_m135_value ||
-            m2_value >= A_m2_value || m7_value >= A_m7_value)
+        /* ---- alarm: 高电平触发(BEEP=1 响, BEEP=0 停) ----
+         * 越限: 响2s -> 停5s 循环报警
+         * 正常: 每10s 短响0.5s 作为心跳提示(确认蜂鸣器在线)
+         * 主循环 ~100ms 节拍 */
+        static u8  alarmSt  = 0;   /* 0=判断, 1=越限响2s, 2=越限停5s, 3=正常短响, 4=正常停10s */
+        static u16 alarmCnt = 0;
+
+        switch (alarmSt)
         {
-            BEEP = !BEEP;
-        }
-        else
-        {
-            BEEP = 0;
+        case 0:  /* 判断阈值 */
+            if (DHT11_Temp >= A_DHT11_Temp || DHT11_Hum <= A_DHT11_Hum)
+            {
+                BEEP     = 1;     /* 高触发: 通电响 */
+                alarmCnt = 20;     /* 响 2s (20 * 100ms) */
+                alarmSt  = 1;
+            }
+            else
+            {
+                BEEP     = 1;      /* 高触发: 短响提示 */
+                alarmCnt = 5;      /* 短响 0.5s (5 * 100ms) */
+                alarmSt  = 3;
+            }
+            break;
+
+        case 1:  /* 越限响2s倒计时 */
+            if (--alarmCnt == 0)
+            {
+                BEEP     = 0;      /* 停响 */
+                alarmCnt = 50;     /* 停 5s (50 * 100ms) */
+                alarmSt  = 2;
+            }
+            break;
+
+        case 2:  /* 越限停5s倒计时, 结束回判断 */
+            if (--alarmCnt == 0)
+                alarmSt = 0;
+            break;
+
+        case 3:  /* 正常短响0.5s倒计时 */
+            if (--alarmCnt == 0)
+            {
+                BEEP     = 0;      /* 停响 */
+                alarmCnt = 100;    /* 停 10s (100 * 100ms) */
+                alarmSt  = 4;
+            }
+            break;
+
+        case 4:  /* 正常停10s倒计时, 结束回判断 */
+            if (--alarmCnt == 0)
+                alarmSt = 0;
+            break;
         }
 
         key_value = KEY_Scan(0);
@@ -453,7 +494,7 @@ void Canshu_Change(u8 key)
     if (key != 1)
         return;
 
-    BEEP = 0;
+    BEEP = 0;  /* 高触发: PA1=0 断电静音 */
     OLED_Clear();
 
     while (1)
