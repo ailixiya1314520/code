@@ -30,7 +30,7 @@ I (..\STM32F10x_FWLib\inc\stm32f10x_usart.h)(0x504F415E)
 I (..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
 I (..\SYSTEM\usart\usart.h)(0x50517A82)
-I (..\HARDWARE\LED\led.h)(0x6AAB47AF)
+I (..\HARDWARE\LED\led.h)(0x6AAC94E1)
 I (..\HARDWARE\DELAY\delay.h)(0x658D0276)
 I (..\HARDWARE\ADC\ADC.h)(0x5DAAC650)
 I (..\HARDWARE\USART3\usart3.h)(0x6AA89646)
@@ -38,7 +38,7 @@ I (..\HARDWARE\KEY\key.h)(0x5E73132E)
 I (..\HARDWARE\OLED\oled.h)(0x6AA8C044)
 I (..\HARDWARE\DHT11\dht11.h)(0x6AAB3BAE)
 I (..\HARDWARE\BMP280\bmp280.h)(0x5DB2BA26)
-I (..\ThingsCloud\thingscloud.h)(0x6AAB3BAE)
+I (..\ThingsCloud\thingscloud.h)(0x6AAC9676)
 I (..\ThingsCloud\esp8266.h)(0x6AA8975C)
 F (.\stm32f10x_it.c)(0x4EBEACB0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -D__MICROLIB -gdwarf-4 -O3 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../USER -I ../CORE -I ../STM32F10x_FWLib/inc -I ../SYSTEM/delay -I ../SYSTEM/sys -I ../SYSTEM/usart -I ../HARDWARE/LED -I ../HARDWARE/KEY -I ../HARDWARE/TIMER -I ../HARDWARE/USART3 -I ../HARDWARE/OLED -I ../HARDWARE/ADC -I ../ThingsCloud -I ../HARDWARE/ccs811 -I ../HARDWARE/RTC -I ../HARDWARE/STMFLASH -I ../HARDWARE/BMP280 -I ../HARDWARE/DHT11 -I ../HARDWARE/EXIT -I ../HARDWARE/DELAY-IF:/keil/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="543" -DSTM32F10X_MD -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ../obj/stm32f10x_it.o -MMD)
 I (stm32f10x_it.h)(0x4D99A426)
@@ -99,8 +99,8 @@ I (..\STM32F10x_FWLib\inc\stm32f10x_tim.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\stm32f10x_usart.h)(0x504F415E)
 I (..\STM32F10x_FWLib\inc\stm32f10x_wwdg.h)(0x4D783BB4)
 I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
-F (..\HARDWARE\LED\led.c)(0x6AAB47C4)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -D__MICROLIB -gdwarf-4 -O3 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../USER -I ../CORE -I ../STM32F10x_FWLib/inc -I ../SYSTEM/delay -I ../SYSTEM/sys -I ../SYSTEM/usart -I ../HARDWARE/LED -I ../HARDWARE/KEY -I ../HARDWARE/TIMER -I ../HARDWARE/USART3 -I ../HARDWARE/OLED -I ../HARDWARE/ADC -I ../ThingsCloud -I ../HARDWARE/ccs811 -I ../HARDWARE/RTC -I ../HARDWARE/STMFLASH -I ../HARDWARE/BMP280 -I ../HARDWARE/DHT11 -I ../HARDWARE/EXIT -I ../HARDWARE/DELAY-IF:/keil/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="543" -DSTM32F10X_MD -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ../obj/led.o -MMD)
-I (..\HARDWARE\LED\led.h)(0x6AAB47AF)
+F (..\HARDWARE\LED\led.c)(0x6AAC94E0)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -D__MICROLIB -gdwarf-4 -O3 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../USER -I ../CORE -I ../STM32F10x_FWLib/inc -I ../SYSTEM/delay -I ../SYSTEM/sys -I ../SYSTEM/usart -I ../HARDWARE/LED -I ../HARDWARE/KEY -I ../HARDWARE/TIMER -I ../HARDWARE/USART3 -I ../HARDWARE/OLED -I ../HARDWARE/ADC -I ../ThingsCloud -I ../HARDWARE/ccs811 -I ../HARDWARE/RTC -I ../HARDWARE/STMFLASH -I ../HARDWARE/BMP280 -I ../HARDWARE/DHT11 -I ../HARDWARE/EXIT -I ../HARDWARE/DELAY-IF:/keil/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="543" -DSTM32F10X_MD -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ../obj/led.o -MMD)
+I (..\HARDWARE\LED\led.h)(0x6AAC94E1)
 I (..\SYSTEM\sys\sys.h)(0x550F951C)
 I (..\USER\stm32f10x.h)(0x4D783CB4)
 I (..\CORE\core_cm3.h)(0x4D523B58)
@@ -837,7 +837,7 @@ I (..\STM32F10x_FWLib\inc\misc.h)(0x4D783BB4)
 I (..\HARDWARE\USART3\usart3.h)(0x6AA89646)
 I (..\HARDWARE\DELAY\delay.h)(0x658D0276)
 F (..\ThingsCloud\thingscloud.c)(0x6AA8F718)(-xc -std=c99 --target=arm-arm-none-eabi -mcpu=cortex-m3 -c-fno-rtti -funsigned-char -fshort-enums -fshort-wchar-D__EVAL -D__MICROLIB -gdwarf-4 -O3 -ffunction-sections -Wno-packed -Wno-missing-variable-declarations -Wno-missing-prototypes -Wno-missing-noreturn -Wno-sign-conversion -Wno-nonportable-include-path -Wno-reserved-id-macro -Wno-unused-macros -Wno-documentation-unknown-command -Wno-documentation -Wno-license-management -Wno-parentheses-equality -Wno-reserved-identifier -I ../USER -I ../CORE -I ../STM32F10x_FWLib/inc -I ../SYSTEM/delay -I ../SYSTEM/sys -I ../SYSTEM/usart -I ../HARDWARE/LED -I ../HARDWARE/KEY -I ../HARDWARE/TIMER -I ../HARDWARE/USART3 -I ../HARDWARE/OLED -I ../HARDWARE/ADC -I ../ThingsCloud -I ../HARDWARE/ccs811 -I ../HARDWARE/RTC -I ../HARDWARE/STMFLASH -I ../HARDWARE/BMP280 -I ../HARDWARE/DHT11 -I ../HARDWARE/EXIT -I ../HARDWARE/DELAY-IF:/keil/Keil/STM32F1xx_DFP/2.4.1/Device/Include-D__UVISION_VERSION="543" -DSTM32F10X_MD -DSTM32F10X_MD -DUSE_STDPERIPH_DRIVER-o ../obj/thingscloud.o -MMD)
-I (..\ThingsCloud\thingscloud.h)(0x6AAB3BAE)
+I (..\ThingsCloud\thingscloud.h)(0x6AAC9676)
 I (..\SYSTEM\sys\sys.h)(0x550F951C)
 I (..\USER\stm32f10x.h)(0x4D783CB4)
 I (..\CORE\core_cm3.h)(0x4D523B58)

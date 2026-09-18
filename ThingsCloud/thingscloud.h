@@ -5,7 +5,7 @@
 /* ---------------- User configuration ---------------- */
 
 /* 0 = ThingsCloud 官方云,  1 = 自建 MQTT Broker（本项目 Java 后端大屏） */
-#define TC_SELF_HOSTED      0
+#define TC_SELF_HOSTED      1
 
 /* Router (2.4GHz only, ESP8266 does not support 5GHz) */
 #define TC_WIFI_SSID        "wjy"
