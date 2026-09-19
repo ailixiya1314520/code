@@ -1,0 +1,533 @@
+/* 信号场 · 详情页 —— 对应网页版 hero / strip / dleg / bento / ribbons / duo / ai */
+
+.page {
+  padding-bottom: 60rpx;
+}
+
+/* ── 设备头（网页版 nav）────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40rpx 32rpx 28rpx;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+}
+
+.wm-bar {
+  width: 6rpx;
+  height: 56rpx;
+  background: var(--acid);
+  flex: none;
+}
+
+.wm-txt {
+  min-width: 0;
+}
+
+.wm-b {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wm-i {
+  display: block;
+  font-size: 16rpx;
+  letter-spacing: 2rpx;
+  color: var(--faint);
+  margin-top: 2rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 60rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+  flex: none;
+}
+
+.live .bead {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.live.on {
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.live.on .bead {
+  background: var(--ok);
+  box-shadow: 0 0 0 6rpx rgba(52, 211, 153, 0.16);
+}
+
+.live.off {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.live.off .bead {
+  background: var(--warn);
+}
+
+/* ── 01 hero（网页版 .figure）───────────────── */
+.figure {
+  display: flex;
+  align-items: flex-start;
+  margin: 40rpx 0 0;
+}
+
+.figure .val {
+  font-size: 176rpx;
+  font-weight: 300;
+  line-height: 0.86;
+  letter-spacing: -6rpx;
+}
+
+.unit-col {
+  margin-left: 16rpx;
+  padding-top: 20rpx;
+}
+
+.unit-col .unit {
+  display: block;
+  font-size: 26rpx;
+  color: var(--dim);
+}
+
+.unit-col .unit-zh {
+  display: block;
+  font-size: 20rpx;
+  color: var(--faint);
+  margin-top: 6rpx;
+}
+
+.figure .meta {
+  margin-left: auto;
+  text-align: right;
+  padding-top: 24rpx;
+}
+
+.figure .m-l {
+  display: block;
+  font-size: 16rpx;
+  letter-spacing: 4rpx;
+  color: var(--faint);
+  margin-bottom: 6rpx;
+}
+
+.figure .m-l.mt {
+  margin-top: 20rpx;
+}
+
+.figure .m-v {
+  display: block;
+  font-size: 26rpx;
+}
+
+/* ── 次级读数条（网页版 .strip）────────────── */
+.strip {
+  display: flex;
+  flex-wrap: wrap;
+  border-top: 1rpx solid var(--line);
+  border-bottom: 1rpx solid var(--line);
+  margin-top: 40rpx;
+}
+
+.strip-i {
+  width: 33.33%;
+  box-sizing: border-box;
+  padding: 20rpx 16rpx 16rpx 32rpx;
+  border-right: 1rpx solid var(--line);
+  border-bottom: 1rpx solid var(--line);
+  min-width: 0;
+}
+
+.strip .l {
+  display: block;
+  font-size: 17rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+  margin-bottom: 10rpx;
+  white-space: nowrap;
+}
+
+.strip .n {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 300;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.strip .u {
+  font-size: 17rpx;
+  color: var(--faint);
+  margin-left: 4rpx;
+}
+
+/* ── 报警风险图例（网页版 .dleg）────────────── */
+.dleg-cap {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid var(--line);
+  font-size: 17rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+}
+
+.dleg {
+  margin-top: 20rpx;
+  border: 1rpx solid var(--line);
+}
+
+.dleg-r {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 14rpx 20rpx;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.dleg-r:last-child {
+  border-bottom: 0;
+}
+
+.dleg-r .sw {
+  width: 28rpx;
+  height: 6rpx;
+  border-radius: 2rpx;
+  background: var(--cy);
+  flex: none;
+}
+
+.dleg-r .sw.hot {
+  background: var(--bad);
+}
+
+.dleg-r .nm {
+  font-size: 24rpx;
+  color: var(--dim);
+  width: 120rpx;
+  flex: none;
+}
+
+.dleg-r .pc {
+  width: 80rpx;
+  font-size: 22rpx;
+  flex: none;
+}
+
+.dleg-meter {
+  flex: 1;
+}
+
+/* ── 02 仪表 Bento（网页版 .bento/.cell）────── */
+.bento {
+  display: flex;
+  flex-wrap: wrap;
+  border: 1rpx solid var(--line);
+}
+
+.cell {
+  width: 50%;
+  box-sizing: border-box;
+  border-right: 1rpx solid var(--line);
+  border-bottom: 1rpx solid var(--line);
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  background: var(--surface);
+}
+
+.cell-h {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 18rpx;
+  letter-spacing: 3rpx;
+  color: var(--dim);
+}
+
+.cell-h .idx {
+  margin-left: auto;
+  color: var(--faint);
+  font-size: 16rpx;
+}
+
+.cell-v {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+}
+
+.cell-v .b {
+  font-size: 56rpx;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -2rpx;
+}
+
+.cell-v .cu {
+  font-size: 18rpx;
+  color: var(--faint);
+}
+
+.cell-f {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.cell-f .lim {
+  font-size: 16rpx;
+  color: var(--faint);
+}
+
+/* ── 03 趋势 ───────────────────────────────── */
+.tabs-wrap {
+  margin: 0 32rpx;
+}
+
+.tabs {
+  white-space: nowrap;
+}
+
+.tab {
+  display: inline-block;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  color: var(--dim);
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  padding: 8rpx 24rpx;
+  margin-right: 12rpx;
+}
+
+.tab.on {
+  background: var(--acid);
+  color: #06070A;
+  border-color: var(--acid);
+  font-weight: 600;
+}
+
+.plot {
+  margin: 20rpx 32rpx 0;
+}
+
+.plot-cap {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  font-size: 18rpx;
+  color: var(--faint);
+}
+
+/* ── 04 控制 ───────────────────────────────── */
+.act {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-top: 1rpx solid var(--line);
+}
+
+.act:first-of-type {
+  border-top: 0;
+  padding-top: 4rpx;
+}
+
+.act-t {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.act-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  flex: none;
+}
+
+.act-b {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 500;
+}
+
+.act-s {
+  display: block;
+  font-size: 16rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+  margin-top: 2rpx;
+}
+
+.btns {
+  display: flex;
+  gap: 12rpx;
+  flex: none;
+}
+
+.msg {
+  font-size: 22rpx;
+  margin-top: 16rpx;
+}
+
+.msg.ok { color: var(--ok); }
+.msg.bad { color: var(--bad); }
+
+.hint {
+  font-size: 19rpx;
+  color: var(--faint);
+  margin-top: 16rpx;
+  line-height: 1.6;
+}
+
+/* ── 04 阈值表单（网页版 .grid-f/.f）────────── */
+.grid-f {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx 0;
+}
+
+.f {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 0 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.f-label {
+  font-size: 18rpx;
+  letter-spacing: 3rpx;
+  color: var(--dim);
+}
+
+.f-input {
+  height: 84rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 30rpx;
+  box-sizing: border-box;
+}
+
+.f-hint {
+  font-size: 16rpx;
+  color: var(--faint);
+  line-height: 1.4;
+}
+
+.th-btns {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 32rpx;
+}
+
+.th-save,
+.th-reset {
+  flex: 1;
+  margin: 0;
+  height: 80rpx;
+}
+
+/* ── 05 AI（网页版 .ai-bar/.ai-out）─────────── */
+.ai-picker {
+  margin-bottom: 16rpx;
+}
+
+.ai-pick {
+  display: inline-block;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: var(--fg);
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  padding: 10rpx 24rpx;
+}
+
+.ai-input {
+  height: 84rpx;
+  padding: 0 24rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 26rpx;
+  margin-bottom: 20rpx;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.ai-go {
+  width: 100%;
+  height: 84rpx;
+  margin: 0;
+}
+
+.ai-go[disabled] {
+  opacity: 0.4;
+  color: #06070A;
+}
+
+.ai-out {
+  margin-top: 24rpx;
+  padding: 26rpx;
+  border: 1rpx solid var(--line);
+  border-left: 4rpx solid var(--acid);
+  border-radius: 2rpx;
+  background: rgba(255, 255, 255, 0.015);
+  font-size: 26rpx;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── 页脚（网页版 footer）──────────────────── */
+.sys {
+  margin: 56rpx 32rpx 0;
+  border-top: 1rpx solid var(--line);
+  padding-top: 24rpx;
+}
+
+.sys-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24rpx;
+  font-size: 19rpx;
+  padding: 10rpx 0;
+  color: var(--dim);
+}
+
+.sys-row text:last-child {
+  text-align: right;
+}

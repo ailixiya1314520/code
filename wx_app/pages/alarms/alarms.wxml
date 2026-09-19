@@ -1,0 +1,51 @@
+<view class="page">
+  <!-- ── 汇总数据条（网页版 .strip）── -->
+  <view class="strip">
+    <view class="strip-i">
+      <text class="l">越限教室</text>
+      <text class="n mono {{alarmCount ? 'bad' : ''}}">{{alarmCount}}</text>
+    </view>
+    <view class="strip-i">
+      <text class="l">离线教室</text>
+      <text class="n mono warn">{{offlineCount}}</text>
+    </view>
+    <view class="strip-i">
+      <text class="l">教室总数</text>
+      <text class="n mono">{{total}}</text>
+    </view>
+  </view>
+
+  <!-- ── 列表（网页版 .rib 行式布局）── -->
+  <view class="rooms">
+    <view
+      wx:for="{{rooms}}"
+      wx:key="id"
+      class="room {{item.online ? '' : 'offline'}}"
+      data-id="{{item.id}}"
+      bindtap="openDetail"
+    >
+      <view class="room-top">
+        <view class="rib-l">
+          <text class="r-name">{{item.name}}</text>
+          <text class="r-id mono">{{item.id}}</text>
+        </view>
+        <text wx:if="{{item.alarm}}" class="chip bad">越限</text>
+        <text wx:elif="{{item.online}}" class="chip ok">正常</text>
+        <text wx:else class="chip dim">离线</text>
+      </view>
+
+      <block wx:if="{{item.overs.length}}">
+        <view class="over" wx:for="{{item.overs}}" wx:for-item="ov" wx:key="key">
+          <text class="ov-mark mono">!</text>
+          <text class="ov-txt">{{ov.label}} · {{ov.text}}</text>
+        </view>
+      </block>
+      <view wx:elif="{{item.alarm}}" class="ov-txt muted">正在报警，但当前数据缺少可判断的阈值</view>
+      <view wx:else class="ov-txt muted">各项指标均在阈值内，蜂鸣器静音</view>
+
+      <view class="room-foot mono">最近上报 {{item.timeText}} · {{item.ago}}</view>
+    </view>
+  </view>
+
+  <view wx:if="{{!rooms.length}}" class="empty">等待设备上报数据…</view>
+</view>

@@ -1,0 +1,221 @@
+<view class="page">
+  <!-- ── 设备头（网页版 nav）── -->
+  <view class="brand">
+    <view class="wordmark">
+      <view class="wm-bar"></view>
+      <view class="wm-txt">
+        <text class="wm-b">{{name}}</text>
+        <text class="wm-i mono">{{id}}</text>
+      </view>
+    </view>
+    <view class="live {{online ? 'on' : 'off'}}">
+      <text class="bead"></text>
+      <text class="mono">{{online ? 'LIVE' : '数据陈旧'}}</text>
+    </view>
+  </view>
+
+  <!-- ══ 01 实时状态 ══ -->
+  <view class="sec">
+    <view class="shead">
+      <text class="snum mono">01</text>
+      <text class="h2">实时状态</text>
+      <text class="sub mono">{{agoText}}</text>
+    </view>
+
+    <!-- hero 大数字（网页版 .figure）-->
+    <view class="figure">
+      <text class="val mono">{{heroTemp}}</text>
+      <view class="unit-col">
+        <text class="unit">°C</text>
+        <text class="unit-zh">温度</text>
+      </view>
+      <view class="meta">
+        <text class="m-l">湿度</text>
+        <text class="m-v mono">{{heroHumi}}</text>
+        <text class="m-l mt">采样</text>
+        <text class="m-v mono">{{heroPts}} pts</text>
+      </view>
+    </view>
+
+    <!-- 状态盒（网页版 .state）-->
+    <view class="state {{stateType}}">
+      <text class="s-ic"></text>
+      <view>
+        <text class="s-t">{{stateTitle}}</text>
+        <text class="s-s">{{stateSub}}</text>
+      </view>
+    </view>
+
+    <!-- 次级读数条（网页版 .strip）-->
+    <view class="strip">
+      <view class="strip-i" wx:for="{{stripSensors}}" wx:key="key">
+        <text class="l">{{item.label}}</text>
+        <text class="n mono">{{item.value}}<text class="u">{{item.unit}}</text></text>
+      </view>
+    </view>
+
+    <!-- 报警风险环图例（网页版 .dleg）-->
+    <view class="dleg-cap">
+      <text>报警风险环</text>
+      <text>满格 = 100% 阈值</text>
+    </view>
+    <view class="dleg">
+      <view class="dleg-r" wx:for="{{riskRows}}" wx:key="key">
+        <text class="sw {{item.hot ? 'hot' : ''}}"></text>
+        <text class="nm">{{item.label}}</text>
+        <text class="pc mono">{{item.pct}}</text>
+        <view class="meter {{item.hot ? 'hot' : ''}} dleg-meter">
+          <view class="fill" style="width:{{item.meterPct}}%"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 02 仪表 ══ -->
+  <view class="sec">
+    <view class="shead">
+      <text class="snum mono">02</text>
+      <text class="h2">仪表</text>
+      <text class="sub">当前值 / 相对阈值风险条</text>
+    </view>
+
+    <view class="bento">
+      <view class="cell" wx:for="{{cells}}" wx:key="key">
+        <view class="cell-h">
+          <text class="nm">{{item.label}}</text>
+          <text class="idx mono">{{item.idx}}</text>
+        </view>
+        <view class="cell-v">
+          <text class="b mono {{item.over ? 'bad' : ''}}">{{item.value}}</text>
+          <text class="cu">{{item.unit}}</text>
+        </view>
+        <view class="meter {{item.over ? 'hot' : ''}}">
+          <view class="fill" style="width:{{item.meterPct}}%"></view>
+        </view>
+        <view class="cell-f">
+          <text class="chip {{item.chipType}}">{{item.chipText}}</text>
+          <text class="lim mono">{{item.limText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 03 趋势 ══ -->
+  <view class="sec">
+    <view class="shead">
+      <text class="snum mono">03</text>
+      <text class="h2">趋势</text>
+      <text class="sub">最近约 1000 个采样点</text>
+    </view>
+
+    <view class="tabs-wrap">
+      <scroll-view class="tabs" scroll-x>
+        <text
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="tab {{active === item.key ? 'on' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="switchMetric"
+        >{{item.label}}</text>
+      </scroll-view>
+    </view>
+    <view class="plot">
+      <trend list="{{series}}" field="{{active}}" color="#38BDF8" unit="{{activeUnit}}" />
+      <view class="plot-cap">
+        <text class="mono">当前 {{activeValue}} {{activeUnit}}</text>
+        <text class="mono">{{activeRange}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ══ 04 控制与阈值 ══ -->
+  <view class="sec">
+    <view class="shead">
+      <text class="snum mono">04</text>
+      <text class="h2">控制与阈值</text>
+    </view>
+
+    <!-- 设备控制 -->
+    <view class="card">
+      <view class="card-title">RGB 灯<text class="sub">云端限频，4 秒内多次下发会被拒绝</text></view>
+      <view class="act" wx:for="{{rgb}}" wx:key="key">
+        <view class="act-t">
+          <text class="act-dot" style="background:{{item.color}}"></text>
+          <view>
+            <text class="act-b">{{item.label}}</text>
+            <text class="act-s mono">{{item.key}} 通道</text>
+          </view>
+        </view>
+        <view class="btns">
+          <text
+            class="ghost sm {{item.on ? 'solid' : ''}}"
+            data-key="{{item.key}}"
+            data-val="1"
+            bindtap="onCtl"
+          >开</text>
+          <text
+            class="ghost sm {{!item.on ? 'solid' : ''}}"
+            data-key="{{item.key}}"
+            data-val="0"
+            bindtap="onCtl"
+          >关</text>
+        </view>
+      </view>
+      <view wx:if="{{msg}}" class="msg {{msg.ok ? 'ok' : 'bad'}}">{{msg.text}}</view>
+      <view class="hint">经 ThingsCloud 属性下发，设备在 attributes/push 收到指令。</view>
+    </view>
+
+    <!-- 报警阈值 -->
+    <view class="card">
+      <view class="card-title">报警阈值<text class="sub">留空表示本次不修改该项</text></view>
+      <view class="grid-f">
+        <view class="f" wx:for="{{thFields}}" wx:key="key">
+          <text class="f-label">{{item.label}}</text>
+          <input
+            class="f-input mono"
+            type="number"
+            value="{{thValues[item.key] || ''}}"
+            placeholder="—"
+            data-key="{{item.key}}"
+            bindinput="onThInput"
+          />
+          <text class="f-hint">{{item.hint}} · 0–{{item.max}}</text>
+        </view>
+      </view>
+      <view class="th-btns">
+        <button class="ghost solid th-save" bindtap="onThSave">保存并下发</button>
+        <button class="ghost th-reset" bindtap="onThReset">还原</button>
+      </view>
+      <view wx:if="{{thMsg}}" class="msg {{thMsg.ok ? 'ok' : 'bad'}}">{{thMsg.text}}</view>
+      <view class="hint">阈值经云端下发后实时生效；掉电重启由设备主动取回，不会退回默认值。</view>
+    </view>
+  </view>
+
+  <!-- ══ 05 AI 分析 ══ -->
+  <view class="sec">
+    <view class="shead">
+      <text class="snum mono">05</text>
+      <text class="h2">AI 分析</text>
+      <text class="sub">读数 · 阈值 · 统计交给模型</text>
+    </view>
+
+    <view class="card">
+      <picker class="ai-picker" mode="selector" range="{{aiMinuteLabels}}" value="{{aiIndex}}" bindchange="onAiMinute">
+        <view class="ai-pick mono">{{aiMinuteLabels[aiIndex]}} ▾</view>
+      </picker>
+      <input class="ai-input" value="{{aiQuestion}}" placeholder="可选追问，例如：现在适合上课吗" bindinput="onAiQuestion" />
+      <button class="ghost solid ai-go" bindtap="onAiGo" disabled="{{aiLoading}}">
+        {{aiLoading ? '正在分析… 10~30 秒' : '开始分析'}}
+      </button>
+      <view wx:if="{{aiResult}}" class="ai-out">{{aiResult}}</view>
+      <view class="hint">结果为模型生成，请结合实际读数判断。</view>
+    </view>
+  </view>
+
+  <!-- ── 页脚系统信息（网页版 footer）── -->
+  <view class="sys">
+    <view class="sys-row"><text class="faint">链路</text><text>STM32 + ESP8266 → ThingsCloud MQTT → Python 后端</text></view>
+    <view class="sys-row"><text class="faint">周期</text><text>6 秒 / 包 · 30 秒无上报视为离线</text></view>
+    <view class="sys-row"><text class="faint">更新</text><text class="mono">{{lastText}}</text></view>
+  </view>
+</view>

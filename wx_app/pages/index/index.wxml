@@ -1,0 +1,93 @@
+<view class="page">
+  <!-- ── 品牌头（网页版 nav wordmark + live）── -->
+  <view class="brand">
+    <view class="wordmark">
+      <view class="wm-bar"></view>
+      <view>
+        <text class="wm-b">信号场</text>
+        <text class="wm-i">CLASSROOM SIGNAL FIELD</text>
+      </view>
+    </view>
+    <view class="live {{connected ? 'on' : 'off'}}">
+      <text class="bead"></text>
+      <text class="mono">{{connected ? 'LIVE ' + clock : '未连接'}}</text>
+    </view>
+  </view>
+
+  <!-- ── 概览数据条（网页版 .strip）── -->
+  <view class="strip">
+    <view class="strip-i">
+      <text class="l">平均温度</text>
+      <text class="n mono">{{avgTemp}}<text class="u">°C</text></text>
+    </view>
+    <view class="strip-i">
+      <text class="l">平均湿度</text>
+      <text class="n mono">{{avgHumi}}<text class="u">%</text></text>
+    </view>
+    <view class="strip-i">
+      <text class="l">在线教室</text>
+      <text class="n mono">{{onlineCount}}<text class="u">/{{total}}</text></text>
+    </view>
+    <view class="strip-i">
+      <text class="l">越限教室</text>
+      <text class="n mono {{alarmCount ? 'bad' : ''}}">{{alarmCount}}</text>
+    </view>
+  </view>
+
+  <!-- ── 01 教室 ── -->
+  <view class="shead">
+    <text class="snum mono">01</text>
+    <text class="h2">教室</text>
+    <text class="sub">最近更新 {{lastText}}</text>
+  </view>
+
+  <view class="rooms">
+    <view
+      wx:for="{{rooms}}"
+      wx:key="id"
+      class="room {{item.online ? '' : 'offline'}}"
+      data-id="{{item.id}}"
+      bindtap="openDetail"
+    >
+      <view class="room-top">
+        <view class="rib-l">
+          <text class="r-name">{{item.name}}</text>
+          <text class="r-id mono">{{item.id}}</text>
+        </view>
+        <text wx:if="{{item.alarm}}" class="chip bad">越限</text>
+        <text wx:elif="{{item.online}}" class="chip ok">正常</text>
+        <text wx:else class="chip dim">离线</text>
+      </view>
+
+      <view class="room-v">
+        <view class="rv">
+          <text class="rv-l">温度</text>
+          <text class="rv-n mono">{{item.temp}}<text class="u">°C</text></text>
+        </view>
+        <view class="rv">
+          <text class="rv-l">湿度</text>
+          <text class="rv-n mono">{{item.humi}}<text class="u">%</text></text>
+        </view>
+        <view class="rv">
+          <text class="rv-l">上报</text>
+          <text class="rv-n mono sm">{{item.ago}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{!rooms.length}}" class="empty">
+    <text>等待设备上报数据…</text>
+    <text>（确认后端与 ThingsCloud 数据链路正常）</text>
+  </view>
+
+  <!-- ── 底部入口（网页版 footer）── -->
+  <view class="foot">
+    <view class="foot-btn" bindtap="goAlarms">
+      <text class="foot-t">实时告警</text>
+      <text wx:if="{{alarmCount}}" class="foot-badge mono">{{alarmCount}}</text>
+      <text class="foot-arrow">→</text>
+    </view>
+    <text class="foot-note mono">STM32F103 · ESP8266 · THINGSCLOUD</text>
+  </view>
+</view>

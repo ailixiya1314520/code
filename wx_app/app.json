@@ -1,0 +1,18 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/detail/detail",
+    "pages/alarms/alarms"
+  ],
+  "window": {
+    "backgroundColor": "#06070A",
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#06070A",
+    "navigationBarTitleText": "信号场 · 教室环境监测",
+    "navigationBarTextStyle": "white",
+    "enablePullDownRefresh": true
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

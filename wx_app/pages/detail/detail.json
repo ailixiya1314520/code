@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "信号场 · 详情",
+  "usingComponents": {
+    "trend": "/components/trend/trend"
+  }
+}

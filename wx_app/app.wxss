@@ -1,0 +1,276 @@
+/**
+ * app.wxss —— 信号场 / SIGNAL FIELD
+ * 与 frontend/index.html 网页版同一套设计令牌：
+ *   近黑底 #06070A · 酸性绿 #D8FF3E（UI 强调）· 青 #38BDF8（数据）
+ *   细线边框 · 直角 · 等宽数字 · 大写字距标签 · 分节编号
+ */
+
+page {
+  --ink: #06070A;
+  --ink2: #0B0D13;
+  --fg: #F4F6FB;
+  --dim: #98A1B3;
+  --faint: #646C7E;
+  --line: rgba(255, 255, 255, 0.085);
+  --line2: rgba(255, 255, 255, 0.16);
+  --surface: rgba(255, 255, 255, 0.022);
+  --acid: #D8FF3E;
+  --cy: #38BDF8;
+  --ok: #34D399;
+  --bad: #FF6B6B;
+  --warn: #FBBF24;
+
+  background: var(--ink);
+  color: var(--fg);
+  font-size: 26rpx;
+  line-height: 1.55;
+  font-family: -apple-system, "PingFang SC", "Helvetica Neue", Helvetica, sans-serif;
+}
+
+/* 等宽数据字体（网页版 JetBrains Mono 的本地近似） */
+.mono {
+  font-family: Menlo, Consolas, "Courier New", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.muted { color: var(--dim); }
+.faint { color: var(--faint); }
+.ok    { color: var(--ok); }
+.bad   { color: var(--bad); }
+.warn  { color: var(--warn); }
+.cy    { color: var(--cy); }
+
+.pad {
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+}
+
+/* ── 分节标题（网页版 .shead）────────────────────── */
+.shead {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin: 56rpx 32rpx 28rpx;
+}
+
+.snum {
+  color: var(--acid);
+  font-size: 20rpx;
+  letter-spacing: 6rpx;
+}
+
+.h2 {
+  font-size: 52rpx;
+  font-weight: 400;
+  letter-spacing: -2rpx;
+  line-height: 1;
+}
+
+.shead .sub {
+  margin-left: auto;
+  font-size: 20rpx;
+  color: var(--faint);
+}
+
+/* ── 卡片：细线 + 表面色 + 直角（网页版 .panel/.cell）── */
+.card {
+  position: relative;
+  margin: 0 32rpx 20rpx;
+  padding: 26rpx;
+  border: 1rpx solid var(--line);
+  background: var(--surface);
+  border-radius: 2rpx;
+  box-sizing: border-box;
+}
+
+.card-title {
+  display: flex;
+  align-items: baseline;
+  font-size: 30rpx;
+  font-weight: 500;
+  margin-bottom: 18rpx;
+}
+
+.card-title .sub {
+  font-size: 20rpx;
+  font-weight: 400;
+  color: var(--faint);
+  margin-left: 12rpx;
+}
+
+/* ── 状态胶囊（网页版 .chip）────────────────────── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 16rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  color: var(--faint);
+  font-size: 18rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+}
+
+.chip.ok  { border-color: rgba(52, 211, 153, 0.4); color: var(--ok); }
+.chip.bad { border-color: rgba(255, 107, 107, 0.5); color: var(--bad); background: rgba(255, 107, 107, 0.08); }
+.chip.dim { border-color: var(--line2); color: var(--faint); }
+
+/* ── LIVE 指示（网页版 .live）──────────────────── */
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 60rpx;
+  padding: 0 22rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+}
+
+.live .bead {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.live.on {
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.live.on .bead {
+  background: var(--ok);
+  box-shadow: 0 0 0 6rpx rgba(52, 211, 153, 0.16);
+}
+
+.live.off {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.live.off .bead {
+  background: var(--warn);
+}
+
+/* ── 按钮（网页版 .ghost）──────────────────────── */
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  height: 72rpx;
+  padding: 0 26rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  color: var(--fg);
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  background: transparent;
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+.ghost::after { border: none; }
+
+.ghost.solid {
+  background: var(--acid);
+  color: #06070A;
+  border-color: var(--acid);
+  font-weight: 600;
+}
+
+.ghost.sm {
+  height: 56rpx;
+  padding: 0 22rpx;
+  font-size: 20rpx;
+}
+
+/* ── 风险条（网页版 .meter）────────────────────── */
+.meter {
+  position: relative;
+  height: 6rpx;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.meter .fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--cy);
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.meter.hot .fill {
+  background: var(--bad);
+}
+
+/* ── 状态盒（网页版 .state）────────────────────── */
+.state {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-top: 28rpx;
+  padding: 18rpx 24rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  background: var(--surface);
+}
+
+.state.ok {
+  border-color: rgba(52, 211, 153, 0.42);
+  background: rgba(52, 211, 153, 0.07);
+}
+
+.state.bad {
+  border-color: rgba(255, 107, 107, 0.5);
+  background: rgba(255, 107, 107, 0.09);
+}
+
+.state .s-ic {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  flex: none;
+  background: var(--dim);
+}
+
+.state.ok .s-ic { background: var(--ok); }
+.state.bad .s-ic { background: var(--bad); }
+
+.state .s-t {
+  font-size: 26rpx;
+  font-weight: 500;
+  display: block;
+}
+
+.state .s-s {
+  font-size: 22rpx;
+  color: var(--dim);
+  display: block;
+  margin-top: 2rpx;
+}
+
+/* ── 其他 ─────────────────────────────────────── */
+.empty {
+  text-align: center;
+  color: var(--faint);
+  font-size: 24rpx;
+  padding: 80rpx 0;
+  line-height: 2;
+}
+
+.dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10rpx;
+  background: var(--faint);
+}
+
+.dot.on { background: var(--ok); box-shadow: 0 0 8rpx var(--ok); }
+.dot.off { background: var(--faint); }

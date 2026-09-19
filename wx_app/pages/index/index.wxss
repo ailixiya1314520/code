@@ -1,0 +1,248 @@
+/* 信号场 · 首页 —— 对应网页版 nav / hero strip / ribbons */
+
+.page {
+  padding-bottom: 40rpx;
+}
+
+/* ── 品牌头（网页版 nav）────────────────────── */
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 40rpx 32rpx 28rpx;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  min-width: 0;
+}
+
+.wm-bar {
+  width: 6rpx;
+  height: 56rpx;
+  background: var(--acid);
+  flex: none;
+}
+
+.wm-b {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 10rpx;
+}
+
+.wm-i {
+  display: block;
+  font-size: 16rpx;
+  letter-spacing: 4rpx;
+  color: var(--faint);
+  margin-top: 2rpx;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  height: 60rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+  font-size: 20rpx;
+  letter-spacing: 2rpx;
+  white-space: nowrap;
+  flex: none;
+}
+
+.live .bead {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  background: var(--faint);
+}
+
+.live.on {
+  border-color: rgba(52, 211, 153, 0.5);
+}
+
+.live.on .bead {
+  background: var(--ok);
+  box-shadow: 0 0 0 6rpx rgba(52, 211, 153, 0.16);
+}
+
+.live.off {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.live.off .bead {
+  background: var(--warn);
+}
+
+/* ── 数据条（网页版 .strip）────────────────── */
+.strip {
+  display: flex;
+  border-bottom: 1rpx solid var(--line);
+}
+
+.strip-i {
+  flex: 1;
+  padding: 20rpx 16rpx 16rpx 32rpx;
+  border-right: 1rpx solid var(--line);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.strip-i:last-child {
+  border-right: 0;
+  padding-right: 32rpx;
+}
+
+.strip .l {
+  display: block;
+  font-size: 17rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+  margin-bottom: 10rpx;
+  white-space: nowrap;
+}
+
+.strip .n {
+  display: block;
+  font-size: 34rpx;
+  font-weight: 300;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.strip .u {
+  font-size: 18rpx;
+  color: var(--faint);
+  margin-left: 4rpx;
+}
+
+/* ── 教室列表（网页版 .rib 行式布局）───────── */
+.rooms {
+  margin: 0 32rpx;
+}
+
+.room {
+  border-bottom: 1rpx solid var(--line);
+  padding: 26rpx 0;
+}
+
+.room.offline {
+  opacity: 0.6;
+}
+
+.room-top {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.rib-l {
+  flex: 1;
+  min-width: 0;
+}
+
+.r-name {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 500;
+}
+
+.r-id {
+  display: block;
+  font-size: 17rpx;
+  color: var(--faint);
+  margin-top: 2rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.room-v {
+  display: flex;
+  margin-top: 20rpx;
+}
+
+.rv {
+  flex: 1;
+  min-width: 0;
+}
+
+.rv-l {
+  display: block;
+  font-size: 17rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+  margin-bottom: 8rpx;
+}
+
+.rv-n {
+  display: block;
+  font-size: 40rpx;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.rv-n.sm {
+  font-size: 26rpx;
+  padding-top: 8rpx;
+}
+
+.rv .u {
+  font-size: 18rpx;
+  color: var(--faint);
+  margin-left: 4rpx;
+}
+
+/* ── 底部（网页版 footer）──────────────────── */
+.foot {
+  margin: 48rpx 32rpx 0;
+  border-top: 1rpx solid var(--line);
+  padding-top: 28rpx;
+}
+
+.foot-btn {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 24rpx;
+  border: 1rpx solid var(--line2);
+  border-radius: 2rpx;
+}
+
+.foot-t {
+  font-size: 26rpx;
+  letter-spacing: 4rpx;
+}
+
+.foot-badge {
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  background: var(--bad);
+  color: #06070A;
+  font-size: 20rpx;
+  padding: 0 8rpx;
+  border-radius: 2rpx;
+}
+
+.foot-arrow {
+  margin-left: auto;
+  color: var(--acid);
+  font-size: 28rpx;
+}
+
+.foot-note {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 17rpx;
+  letter-spacing: 3rpx;
+  color: var(--faint);
+  text-align: center;
+}
