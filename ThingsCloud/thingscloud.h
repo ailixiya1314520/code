@@ -5,11 +5,11 @@
 /* ---------------- User configuration ---------------- */
 
 /* 0 = ThingsCloud 官方云,  1 = 自建 MQTT Broker（本项目 Java 后端大屏） */
-#define TC_SELF_HOSTED      1
+#define TC_SELF_HOSTED      0
 
 /* Router (2.4GHz only, ESP8266 does not support 5GHz) */
-#define TC_WIFI_SSID        "wjy"
-#define TC_WIFI_PWD         "w2679479160"
+#define TC_WIFI_SSID        "Redmi"
+#define TC_WIFI_PWD         "1234567890"
 
 #if TC_SELF_HOSTED
 /* ---- 自建 Broker：填运行 Java 后端那台电脑的局域网 IP ---- */
@@ -43,6 +43,11 @@
 #define TC_ATTR_TEMP        "Temp"              /* temperature */
 #define TC_ATTR_HUMI        "Humi"              /* humidity   */
 
+/* Downlink threshold keys (cloud -> device, integers), parsed by
+ * ThingsCloud_Poll and pulled once after connect (see tcThresholds[]):
+ *   A_Temp A_Hum A_Pre A_GZ_Value A_MQ2_Value A_MQ7_Value A_MQ135_Value
+ * Backend: POST /app/device/v1/<AccessToken>/attributes {"A_Temp":35,...} */
+
 #define TC_KEEPALIVE        120                 /* seconds */
 
 /* ---------------------------------------------------- */
@@ -50,10 +55,8 @@
 /* Downlink (cloud -> device) parsed result */
 typedef struct
 {
-    u8  led;             /* 0=off 1=on */
-    u8  ledUpdate;       /* 1=new value arrived */
-    u8  curtain;         /* 0=close 1=open */
-    u8  curtainUpdate;   /* 1=new value arrived */
+    u8  r, g, b;         /* RGB lamp channels, 0=off 1=on; keys "R" "G" "B" */
+    u8  rgbUpdate;       /* 1=any channel arrived */
 } TC_Command_t;
 
 extern TC_Command_t gTcCmd;

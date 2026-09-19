@@ -5,8 +5,42 @@
 #include "delay.h"
 #include "string.h"
 #include "stdio.h"
+#include "stdlib.h"
 
 TC_Command_t gTcCmd;
+
+/* Alarm thresholds live in main.c; the cloud writes them directly */
+extern u16 A_DHT11_Temp, A_DHT11_Hum, A_pre, A_gz_value,
+           A_m2_value, A_m7_value, A_m135_value;
+
+static const struct { const char *key; u16 *var; } tcThresholds[] = {
+    { "A_Temp",        &A_DHT11_Temp },
+    { "A_Hum",         &A_DHT11_Hum  },
+    { "A_Pre",         &A_pre        },
+    { "A_GZ_Value",    &A_gz_value   },
+    { "A_MQ2_Value",   &A_m2_value   },
+    { "A_MQ7_Value",   &A_m7_value   },
+    { "A_MQ135_Value", &A_m135_value },
+};
+#define TC_THRESHOLD_NUM  (sizeof(tcThresholds) / sizeof(tcThresholds[0]))
+
+/* ------------------------------------------------------------------ */
+/* Search for "key":<number> in a JSON string. Returns 1 and writes
+ * *out when found, 0 otherwise. */
+static u8 JSON_FindU16(const char *json, const char *key, u16 *out)
+{
+    char pat[24];
+    const char *p;
+
+    sprintf(pat, "\"%s\":", key);
+    p = strstr(json, pat);
+    if (p == NULL) return 0;
+    p += strlen(pat);
+    while (*p == ' ') p++;
+    if (*p < '0' || *p > '9') return 0;
+    *out = (u16)atoi(p);
+    return 1;
+}
 
 /* ------------------------------------------------------------------ */
 /* Search for "key":true / "key":false / "key":1 / "key":0 in a JSON
@@ -122,7 +156,30 @@ u8 ThingsCloud_Init(void)
         printf("\r\n");
     }
 
+#if !TC_SELF_HOSTED
+    /* Also listen for the reply to attributes/get, then ask the cloud for
+     * the stored thresholds so a reboot does not fall back to defaults.
+     * The reply lands in the main loop and is parsed by ThingsCloud_Poll. */
+    len = MQTT_BuildSubscribe(mqttTxBuf, "attributes/get/response/+", 0);
+    if (!ESP8266_SendData(mqttTxBuf, (u16)len))
+        printf("MQTT SUBSCRIBE get/response failed\r\n");
+    delay_ms(300);
+#endif
+
     USART3_ClearRx();       /* 清空 CONNACK/SUBACK，交给主循环 Poll 干净缓冲 */
+
+#if !TC_SELF_HOSTED
+    {
+        char req[128];
+        u8   i;
+        int  n = sprintf(req, "{\"keys\":[");
+        for (i = 0; i < TC_THRESHOLD_NUM; i++)
+            n += sprintf(req + n, "\"%s\",", tcThresholds[i].key);
+        strcpy(req + n - 1, "]}");                  /* overwrite last ',' */
+        len = MQTT_BuildPublish(mqttTxBuf, "attributes/get/1", req, strlen(req));
+        ESP8266_SendData(mqttTxBuf, (u16)len);      /* do not clear RX: reply may already be in it */
+    }
+#endif
 
     printf("--- ThingsCloud connected ---\r\n");
     return 1;
@@ -167,20 +224,43 @@ u8 ThingsCloud_Poll(void)
     n = USART3_GetFrame(frame, sizeof(frame) - 1);
     frame[n] = 0;
 
-    printf("cloud<%s\r\n", frame);
-
-    v = JSON_FindBool((const char *)frame, "LED");
-    if (v >= 0)
+    /* The frame is a raw MQTT packet ("+IPD,n:" 0x30 len 0x00 topiclen topic
+     * payload). The 0x00 topic-length byte would end the C string before the
+     * JSON, so blank every NUL first; strstr then reaches the payload. */
     {
-        gTcCmd.led       = (u8)v;
-        gTcCmd.ledUpdate = 1;
+        u16 i;
+        for (i = 0; i < n; i++)
+            if (frame[i] == 0) frame[i] = ' ';
     }
 
-    v = JSON_FindBool((const char *)frame, "Curtain");
-    if (v >= 0)
+    if (strchr((const char *)frame, '{') == NULL)
+        return 0;                       /* PINGRESP / SEND OK etc: nothing to parse */
+
+    printf("cloud<%s\r\n", frame);
+
+    /* RGB lamp: a push may carry any subset, untouched channels keep last value */
     {
-        gTcCmd.curtain       = (u8)v;
-        gTcCmd.curtainUpdate = 1;
+        static const struct { const char *key; u8 *var; } rgb[] = {
+            { "R", &gTcCmd.r }, { "G", &gTcCmd.g }, { "B", &gTcCmd.b },
+        };
+        u8 i;
+        for (i = 0; i < 3; i++)
+        {
+            v = JSON_FindBool((const char *)frame, rgb[i].key);
+            if (v >= 0)
+            {
+                *rgb[i].var      = (u8)v;
+                gTcCmd.rgbUpdate = 1;
+            }
+        }
+    }
+
+    /* thresholds: same parser serves attributes/push and the attributes/get reply */
+    {
+        u8 i;
+        for (i = 0; i < TC_THRESHOLD_NUM; i++)
+            if (JSON_FindU16((const char *)frame, tcThresholds[i].key, tcThresholds[i].var))
+                printf("cloud %s=%d\r\n", tcThresholds[i].key, *tcThresholds[i].var);
     }
 
     return 1;

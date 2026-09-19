@@ -19,7 +19,12 @@
 #define BUJ1 PBout(14)	
 #define BUJ2 PAout(12)// PE5	
 #define BUJ3 PAout(15)// PE5	
-#define BUJ4 PBout(3)// PE5	
+#define BUJ4 PBout(3)// PE5
+
+/* 4 脚 RGB 灯 (共阴: "-" 接 GND, 1=亮). 共阳模块把三个宏改成 !PAout 即可 */
+#define RGB_R PAout(3)
+#define RGB_G PBout(1)
+#define RGB_B PBout(4)   /* NJTRST, LED_Init 一开始就关 JTAG 释放, 否则上电蓝灯常亮 */
 void LED_Init(void);//��ʼ��
 
 		 				    

@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>信号场 · 教室环境监测</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   信号场 / SIGNAL FIELD — 教室环境监测
+   Type   Space Grotesk (display) · JetBrains Mono (data)
+          Instrument Serif italic (accent) · Noto Sans SC (中文)
+   Icons  Lucide, inlined as an SVG sprite. No emoji anywhere.
+   Marks  single data hue per chart (#38BDF8); never a dual axis.
+   Motion hand-rolled spring integrator; fully disabled under
+          prefers-reduced-motion, which renders the final state.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --ink:#06070A; --ink2:#0B0D13;
+  --fg:#F4F6FB; --dim:#98A1B3; --faint:#646C7E;
+  --line:rgba(255,255,255,.085); --line2:rgba(255,255,255,.16);
+  --surface:rgba(255,255,255,.022);
+  --acid:#D8FF3E;                 /* UI accent: numerals, CTA, rules */
+  --cy:#38BDF8; --cy-deep:#0891B2;/* data marks */
+  --ok:#34D399; --bad:#FF6B6B; --warn:#FBBF24;
+  --e:cubic-bezier(.16,1,.3,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--ink); color:var(--fg);
+  font-family:'Space Grotesk','Noto Sans SC',system-ui,sans-serif;
+  font-size:15px; line-height:1.55; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+canvas#field{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(130% 92% at 50% 0%,transparent 42%,rgba(6,7,10,.86) 100%)}
+.shell{position:relative;z-index:2}
+
+h1,h2,h3,h4{margin:0;font-weight:500;letter-spacing:-.03em;line-height:.94}
+p{margin:0}
+button,input,select{font:inherit;color:inherit;background:none;border:0}
+a{color:inherit}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-feature-settings:'tnum'}
+.serif{font-family:'Instrument Serif',Georgia,serif;font-style:italic;letter-spacing:0}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+:focus-visible{outline:2px solid var(--acid);outline-offset:3px;border-radius:2px}
+svg.ic{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+svg.ic.s{width:14px;height:14px} svg.ic.l{width:22px;height:22px}
+
+.pad{padding-inline:clamp(18px,4.4vw,72px)}
+.rule{height:1px;background:var(--line);border:0;margin:0}
+
+/* progress hairline */
+#prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--acid);z-index:90;
+  box-shadow:0 0 14px rgba(216,255,62,.6)}
+
+/* ── nav ─────────────────────────────────────────────────── */
+nav{position:sticky;top:0;z-index:60;padding-top:env(safe-area-inset-top,0px);
+  background:rgba(6,7,10,.72);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--line)}
+.nav-in{display:flex;align-items:center;gap:clamp(12px,2vw,26px);height:62px}
+.wordmark{display:flex;align-items:center;gap:10px;margin-right:auto;min-width:0}
+.wordmark .ic{color:var(--acid)}
+.wordmark b{font-size:14px;font-weight:600;letter-spacing:.24em;text-transform:uppercase}
+.wordmark i{font-style:normal;font-size:10.5px;letter-spacing:.2em;color:var(--faint);text-transform:uppercase}
+
+.sel{position:relative;display:flex;align-items:center}
+.sel select{appearance:none;height:38px;padding:0 30px 0 13px;border:1px solid var(--line2);
+  border-radius:1px;font-size:13px;letter-spacing:.04em;cursor:pointer;background:rgba(255,255,255,.03);
+  transition:border-color .3s var(--e)}
+.sel select:hover{border-color:var(--acid)}
+.sel .ic{position:absolute;right:9px;pointer-events:none;color:var(--dim);width:14px;height:14px}
+
+.live{display:inline-flex;align-items:center;gap:9px;height:38px;padding:0 15px;
+  border:1px solid var(--line2);border-radius:1px;font-size:11.5px;letter-spacing:.11em;
+  text-transform:uppercase;white-space:nowrap;font-family:'JetBrains Mono',monospace}
+.live .bead{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+.live.on{border-color:rgba(52,211,153,.5)}
+.live.on .bead{background:var(--ok);box-shadow:0 0 0 4px rgba(52,211,153,.16);animation:bd 2.6s ease-in-out infinite}
+.live.off{border-color:rgba(251,191,36,.45)} .live.off .bead{background:var(--warn)}
+@keyframes bd{0%,100%{opacity:1}50%{opacity:.35}}
+
+.ghost{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:38px;min-width:38px;
+  padding:0 14px;border:1px solid var(--line2);border-radius:1px;cursor:pointer;
+  font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;
+  transition:border-color .3s var(--e),color .3s var(--e),background .3s var(--e)}
+.ghost:hover{border-color:var(--acid);color:var(--acid)}
+.ghost[aria-pressed="true"]{background:var(--acid);color:#06070A;border-color:var(--acid)}
+.ghost[disabled]{opacity:.4;cursor:not-allowed}
+.ghost.solid{background:var(--acid);color:#06070A;border-color:var(--acid);font-weight:600}
+.ghost.solid:hover{background:#E9FF7A;color:#06070A}
+
+/* ── section scaffold ────────────────────────────────────── */
+section{position:relative;padding-block:clamp(56px,8vw,118px)}
+.shead{display:flex;align-items:baseline;gap:18px;margin-bottom:clamp(26px,4vw,52px);flex-wrap:wrap}
+.snum{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.24em;color:var(--acid)}
+.shead h2{font-size:clamp(26px,4.4vw,52px);font-weight:400}
+.shead .sub{margin-left:auto;font-size:12px;color:var(--faint);max-width:44ch;line-height:1.5;text-align:right}
+@media(max-width:760px){.shead .sub{text-align:left;margin-left:0}}
+
+/* ── hero ────────────────────────────────────────────────── */
+.hero{padding-top:clamp(40px,6vw,76px);padding-bottom:clamp(30px,4vw,54px)}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.32fr) minmax(0,.68fr);gap:clamp(24px,4vw,56px);align-items:end}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr}}
+.kicker{display:flex;align-items:center;gap:11px;font-family:'JetBrains Mono',monospace;
+  font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--faint);margin-bottom:22px}
+.kicker span.bar{width:38px;height:1px;background:var(--acid)}
+.hero h1{font-size:clamp(46px,10.4vw,142px);font-weight:500;letter-spacing:-.05em}
+.hero h1 em{font-style:normal;color:var(--faint)}
+.hero h1 .ser{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;color:var(--acid);letter-spacing:-.02em}
+
+/* hero figure — the one number the page leads with */
+.figure{display:flex;align-items:flex-start;gap:14px;margin-top:clamp(20px,3vw,38px)}
+.figure .val{font-family:'Space Grotesk',sans-serif;font-weight:500;
+  font-size:clamp(76px,15vw,196px);line-height:.82;letter-spacing:-.055em;
+  font-variant-numeric:proportional-nums}
+.figure .unit{font-family:'JetBrains Mono',monospace;font-size:clamp(13px,1.5vw,18px);
+  color:var(--dim);padding-top:.7em;letter-spacing:.06em}
+.figure .meta{margin-left:auto;text-align:right;align-self:flex-end;padding-bottom:.5em}
+.figure .meta .l{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--faint);display:block;margin-bottom:5px}
+.figure .meta .v{font-family:'JetBrains Mono',monospace;font-size:14px}
+
+.state{display:inline-flex;align-items:center;gap:10px;margin-top:22px;padding:9px 16px 9px 13px;
+  border:1px solid;border-radius:1px;font-size:13px}
+.state.ok{border-color:rgba(52,211,153,.42);background:rgba(52,211,153,.07)}
+.state.ok .ic{color:var(--ok)}
+.state.bad{border-color:rgba(255,107,107,.5);background:rgba(255,107,107,.09)}
+.state.bad .ic{color:var(--bad)}
+.state.off{border-color:var(--line2);background:rgba(255,255,255,.02)} .state.off .ic{color:var(--dim)}
+.state b{font-weight:500} .state span{color:var(--dim);font-size:12.5px}
+
+/* radial meter instrument */
+.dial{position:relative;width:100%;max-width:410px;margin-left:auto}
+@media(max-width:900px){.dial{margin:0 auto}}
+.dial svg{width:100%;height:auto;display:block;overflow:visible}
+.dial-cap{display:flex;justify-content:space-between;margin-top:14px;padding-top:12px;
+  border-top:1px solid var(--line);
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.17em;
+  text-transform:uppercase;color:var(--faint)}
+.dleg{margin-top:14px;display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
+.dleg div{display:flex;align-items:center;gap:9px;padding:7px 11px;background:var(--ink);
+  font-family:'JetBrains Mono',monospace;font-size:11px}
+.dleg .sw{width:14px;height:3px;border-radius:2px;flex:none}
+.dleg .nm{color:var(--dim);font-family:'Space Grotesk','Noto Sans SC',sans-serif;font-size:12px}
+.dleg .pc{margin-left:auto;color:var(--fg)}
+.dleg .ic{width:13px;height:13px;flex:none}
+.dleg .ok{color:var(--ok)} .dleg .bad{color:var(--bad)} .dleg .dim{color:var(--faint)}
+
+/* secondary readout strip */
+.strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));
+  border-top:1px solid var(--line);margin-top:clamp(28px,4vw,50px)}
+.strip div{padding:15px 4px 2px;border-right:1px solid var(--line)}
+.strip div:last-child{border-right:0}
+.strip .l{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+.strip .l .ic{width:12px;height:12px}
+.strip .n{font-family:'JetBrains Mono',monospace;font-size:clamp(17px,2.1vw,25px);font-weight:300}
+.strip .n u{text-decoration:none;font-size:11px;color:var(--faint);margin-left:4px}
+
+/* ── marquee ─────────────────────────────────────────────── */
+.marq{overflow:hidden;border-block:1px solid var(--line);padding:13px 0;white-space:nowrap;user-select:none}
+.marq-t{display:inline-block;animation:mq 46s linear infinite;font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--faint)}
+.marq.hold .marq-t{animation-play-state:paused}
+.marq-t i{font-style:normal;color:var(--acid);margin-inline:20px}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+/* ── instrument bento ────────────────────────────────────── */
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+.cell{background:var(--ink);padding:clamp(16px,1.9vw,26px);display:flex;flex-direction:column;gap:13px;
+  position:relative;transition:background .45s var(--e);min-height:172px}
+.cell:hover{background:var(--ink2)}
+.cell.w4{grid-column:span 4} .cell.w3{grid-column:span 3} .cell.w6{grid-column:span 6}
+@media(max-width:1100px){.cell.w4,.cell.w3{grid-column:span 6}.cell.w6{grid-column:span 12}}
+@media(max-width:620px){.cell.w4,.cell.w3,.cell.w6{grid-column:span 12}}
+.cell-h{display:flex;align-items:center;gap:9px;font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.cell-h .ic{color:var(--cy)}
+.cell-h .idx{margin-left:auto;color:var(--faint);font-size:10px}
+.cell-v{display:flex;align-items:baseline;gap:7px}
+.cell-v b{font-family:'JetBrains Mono',monospace;font-weight:300;
+  font-size:clamp(30px,3.6vw,46px);line-height:1;letter-spacing:-.03em}
+.cell-v u{text-decoration:none;font-size:11.5px;color:var(--faint);font-family:'JetBrains Mono',monospace}
+/* risk meter — one ratio against its limit, same-ramp track */
+.meter{height:3px;background:rgba(255,255,255,.08);position:relative;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--cy);width:0;transition:width .7s var(--e)}
+.meter.hot i{background:var(--bad)}
+.meter b{position:absolute;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
+.cell-f{display:flex;align-items:center;gap:9px;margin-top:auto;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border:1px solid;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.09em;text-transform:uppercase}
+.chip.ok{border-color:rgba(52,211,153,.4);color:var(--ok)}
+.chip.bad{border-color:rgba(255,107,107,.5);color:var(--bad);background:rgba(255,107,107,.08)}
+.chip.dim{border-color:var(--line2);color:var(--faint)}
+.cell-f .lim{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint)}
+.spark{height:30px;margin-top:2px}
+.spark svg{width:100%;height:30px;display:block;overflow:visible}
+
+/* ── trend ribbons ───────────────────────────────────────── */
+.ribbons{border-top:1px solid var(--line)}
+.rib{border-bottom:1px solid var(--line);display:grid;grid-template-columns:200px 1fr 118px;
+  align-items:center;gap:clamp(14px,2.4vw,34px);padding:14px 0;transition:background .4s var(--e)}
+.rib:hover{background:rgba(255,255,255,.017)}
+@media(max-width:820px){.rib{grid-template-columns:1fr;gap:9px;padding:18px 0}}
+.rib-l{display:flex;align-items:center;gap:10px;min-width:0}
+.rib-l .ic{color:var(--cy)}
+.rib-l b{font-size:14px;font-weight:400}
+.rib-l small{display:block;font-family:'JetBrains Mono',monospace;font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.plot{position:relative;min-width:0}
+.plot svg{display:block;width:100%;overflow:visible;touch-action:pan-y}
+.plot:focus-visible{outline:2px solid var(--acid);outline-offset:4px}
+.rib-r{text-align:right;font-family:'JetBrains Mono',monospace}
+@media(max-width:820px){.rib-r{text-align:left}}
+.rib-r .now{font-size:20px;font-weight:300}
+.rib-r .now u{text-decoration:none;font-size:10.5px;color:var(--faint);margin-left:3px}
+.rib-r .mm{font-size:10px;color:var(--faint);letter-spacing:.09em;margin-top:3px}
+.tip{position:absolute;z-index:8;pointer-events:none;opacity:0;transform:translate(-50%,-115%);
+  background:#0B0D13;border:1px solid var(--line2);padding:7px 11px;white-space:nowrap;
+  font-family:'JetBrains Mono',monospace;transition:opacity .14s}
+.tip.on{opacity:1}
+.tip .v{font-size:13px;font-weight:500} .tip .t{display:block;font-size:10px;color:var(--faint);margin-top:2px}
+.tip .k{display:inline-block;width:11px;height:2px;background:var(--cy);vertical-align:middle;margin-right:7px}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-family:'JetBrains Mono',monospace;font-size:12px}
+th,td{padding:9px 13px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--ink)}
+thead th{color:var(--faint);font-weight:400;font-size:10px;letter-spacing:.14em;text-transform:uppercase}
+tbody tr:hover td{background:rgba(255,255,255,.03)}
+
+/* ── control + thresholds ────────────────────────────────── */
+.duo{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.panel{background:var(--ink);padding:clamp(20px,2.6vw,34px)}
+.panel h3{font-size:16px;font-weight:400;margin-bottom:5px;display:flex;align-items:center;gap:9px}
+.panel h3 .ic{color:var(--acid)}
+.panel .lead{font-size:12px;color:var(--faint);margin-bottom:24px;line-height:1.6}
+.act{display:flex;align-items:center;gap:14px;padding:16px 0;border-top:1px solid var(--line)}
+.act .ic{color:var(--cy)}
+.act b{font-size:13.5px;font-weight:400;display:block}
+.act small{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--faint)}
+.act .btns{margin-left:auto;display:flex;gap:7px}
+
+.grid-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:15px}
+.f{display:flex;flex-direction:column;gap:6px}
+.f label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--dim)}
+.f input{height:44px;padding:0 12px;border:1px solid var(--line2);background:rgba(255,255,255,.02);
+  font-family:'JetBrains Mono',monospace;font-size:15px;transition:border-color .3s var(--e)}
+.f input:hover{border-color:var(--dim)}
+.f input:focus{border-color:var(--acid)}
+.f input[aria-invalid="true"]{border-color:var(--bad);background:rgba(255,107,107,.06)}
+.f .hint{font-size:10.5px;color:var(--faint);line-height:1.45}
+.f .err{display:none;align-items:center;gap:5px;font-size:11px;color:var(--bad)}
+.f .err.on{display:flex}
+.esum{display:none;margin-bottom:18px;padding:14px 17px;border:1px solid rgba(255,107,107,.45);
+  background:rgba(255,107,107,.08)}
+.esum.on{display:block}
+.esum h4{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--bad);margin-bottom:7px}
+.esum ul{margin:0;padding-left:19px;font-size:12px} .esum a{color:var(--bad)}
+
+/* ── AI ──────────────────────────────────────────────────── */
+.ai-bar{display:flex;gap:11px;flex-wrap:wrap;align-items:center;margin-bottom:20px}
+.ai-bar input[type=text]{flex:1;min-width:210px;height:44px;padding:0 15px;border:1px solid var(--line2);
+  background:rgba(255,255,255,.02);font-size:14px;transition:border-color .3s var(--e)}
+.ai-bar input[type=text]:focus{border-color:var(--acid)}
+.ai-bar input::placeholder{color:var(--faint)}
+.ai-bar .ghost.solid{height:44px;padding:0 22px}
+.ai-out{border:1px solid var(--line);border-left:2px solid var(--acid);padding:clamp(20px,2.6vw,32px);
+  font-size:14.5px;line-height:1.85;white-space:pre-wrap;min-height:120px;max-height:440px;overflow:auto;
+  background:rgba(255,255,255,.015)}
+.ai-out.idle{white-space:normal;color:var(--faint);display:flex;align-items:center;gap:11px;border-left-color:var(--line)}
+.ai-out[aria-busy="true"]{opacity:.55}
+.spin{width:15px;height:15px;border:1.5px solid var(--line2);border-top-color:var(--acid);
+  border-radius:50%;animation:sp .75s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+footer{border-top:1px solid var(--line);padding-block:32px 46px;display:flex;gap:14px;
+  align-items:center;flex-wrap:wrap;font-family:'JetBrains Mono',monospace;font-size:11px;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--faint)}
+footer input{height:36px;padding:0 11px;border:1px solid var(--line2);background:rgba(255,255,255,.02);
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;width:230px;text-transform:none;letter-spacing:0}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,16px);z-index:95;
+  display:flex;align-items:center;gap:10px;padding:13px 19px;background:#0B0D13;
+  border:1px solid var(--line2);font-size:13px;opacity:0;pointer-events:none;
+  transition:opacity .34s var(--e),transform .34s var(--e);max-width:calc(100vw - 32px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.ok .ic{color:var(--ok)} .toast.bad .ic{color:var(--bad)}
+
+/* entrance — spring-staggered, killed under reduced motion */
+.rise{opacity:0;transform:translateY(22px)}
+.rise.in{opacity:1;transform:none;transition:opacity .75s var(--e),transform .75s var(--e)}
+.dim-refresh{opacity:.5;transition:opacity .3s var(--e)}
+
+/* narrow screens: keep the nav one line, never wrap the wordmark or button labels */
+@media (max-width:700px){
+  .nav-in{height:auto;padding-block:10px;gap:9px;flex-wrap:wrap}
+  .wordmark{margin-right:0;flex:1 1 100%}
+  .wordmark i{display:none}
+  .wordmark b{font-size:13px;letter-spacing:.18em}
+  .nav-in .sel{flex:1 1 auto;min-width:0}
+  .nav-in .sel select{width:100%;text-overflow:ellipsis}
+  .live{padding:0 11px;font-size:10.5px;letter-spacing:.08em}
+  .ghost{white-space:nowrap}
+  .figure .meta{display:none}
+  .strip{grid-template-columns:repeat(2,1fr)}
+  .strip div{border-right:0;border-bottom:1px solid var(--line);padding-bottom:12px}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important}
+  .rise{opacity:1;transform:none}
+  canvas#field{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- Lucide icons, inlined verbatim -->
+<svg class="sr" aria-hidden="true"><defs>
+<symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+<symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+<symbol id="i-blinds" viewBox="0 0 24 24"><path d="M3 3h18"/><path d="M20 7H8"/><path d="M20 11H8"/><path d="M10 19h10"/><path d="M8 15h12"/><path d="M4 3v14"/><circle cx="4" cy="19" r="2"/></symbol>
+<symbol id="i-chart-line" viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></symbol>
+<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+<symbol id="i-circle-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></symbol>
+<symbol id="i-droplets" viewBox="0 0 24 24"><path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97"/></symbol>
+<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+<symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+<symbol id="i-radio-tower" viewBox="0 0 24 24"><path d="M4.9 16.1C1 12.2 1 5.8 4.9 1.9"/><path d="M7.8 4.7a6.14 6.14 0 0 0-.8 7.5"/><circle cx="12" cy="9" r="2"/><path d="M16.2 4.8c2 2 2.26 5.11.8 7.47"/><path d="M19.1 1.9a9.96 9.96 0 0 1 0 14.1"/><path d="M9.5 18h5"/><path d="m8 22 4-11 4 11"/></symbol>
+<symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+<symbol id="i-sliders-horizontal" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></symbol>
+<symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></symbol>
+<symbol id="i-table-2" viewBox="0 0 24 24"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"/></symbol>
+<symbol id="i-thermometer" viewBox="0 0 24 24"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></symbol>
+<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+<symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/><path d="M5 12.859a10 10 0 0 1 5.17-2.69"/><path d="M19 12.859a10 10 0 0 0-2.007-1.523"/><path d="M2 8.82a15 15 0 0 1 4.177-2.643"/><path d="M22 8.82a15 15 0 0 0-11.288-3.764"/><path d="m2 2 20 20"/></symbol>
+<symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/></symbol>
+<symbol id="i-wind" viewBox="0 0 24 24"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></symbol>
+</defs></svg>
+
+<canvas id="field" aria-hidden="true"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div id="prog" aria-hidden="true"></div>
+
+<div class="shell">
+<nav>
+  <div class="nav-in pad">
+    <div class="wordmark">
+      <svg class="ic l" aria-hidden="true"><use href="#i-activity"/></svg>
+      <div><b>信号场</b><br><i>Classroom Signal Field</i></div>
+    </div>
+    <label class="sr" for="dev">选择设备</label>
+    <span class="sel"><select id="dev"></select><svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></span>
+    <span id="live" class="live" role="status" aria-atomic="true">
+      <span class="bead" aria-hidden="true"></span><span id="liveTxt">连接中</span>
+    </span>
+    <button id="pause" class="ghost" aria-pressed="false" aria-label="暂停自动刷新">
+      <svg class="ic s" aria-hidden="true"><use href="#i-pause"/></svg><span>暂停</span>
+    </button>
+  </div>
+</nav>
+
+<main>
+  <!-- ── 01 HERO ── -->
+  <section class="hero pad">
+    <div class="hero-grid">
+      <div>
+        <div class="kicker"><span class="bar"></span><span>01 — 实时状态</span>
+          <svg class="ic s" aria-hidden="true"><use href="#i-radio-tower"/></svg><span id="devName">—</span></div>
+        <h1>教室环境<br><span class="ser">在此刻</span> <em>/ NOW</em></h1>
+
+        <div class="figure">
+          <span class="val" id="heroVal">—</span>
+          <span class="unit">°C<br>温度</span>
+          <span class="meta">
+            <span class="l">湿度</span><span class="v" id="heroHum">—</span>
+            <span class="l" style="margin-top:14px">采样</span><span class="v" id="heroN">—</span>
+          </span>
+        </div>
+
+        <div id="state" class="state off">
+          <svg class="ic" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
+          <div><b id="stateT">等待数据</b> <span id="stateS">正在连接后端</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="dial">
+          <svg id="dial" viewBox="0 0 400 400" role="img" aria-labelledby="dialT">
+            <title id="dialT">六项报警指标的风险环</title>
+          </svg>
+          <div class="dial-cap"><span>报警风险环</span><span>满环 = 100% 阈值</span></div>
+          <div class="dleg" id="dleg"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="strip" id="strip"></div>
+  </section>
+
+  <div class="marq" id="marq" aria-hidden="true"><span class="marq-t" id="marqT"></span></div>
+
+  <!-- ── 02 INSTRUMENTS ── -->
+  <section class="pad">
+    <div class="shead">
+      <span class="snum">02</span><h2>仪表</h2>
+      <p class="sub">每格给出当前值、相对阈值的风险条与状态标签。状态由图标和文字同时表达，不单靠颜色区分。</p>
+    </div>
+    <div class="bento" id="bento"></div>
+  </section>
+
+  <!-- ── 03 TRENDS ── -->
+  <section class="pad">
+    <div class="shead">
+      <span class="snum">03</span><h2>趋势</h2>
+      <div style="margin-left:auto;display:flex;gap:9px;align-items:center;flex-wrap:wrap">
+        <span class="sel"><select id="range">
+          <option value="10">最近 10 分钟</option>
+          <option value="60" selected>最近 1 小时</option>
+          <option value="360">最近 6 小时</option>
+        </select><svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></span>
+        <button id="viewBtn" class="ghost" aria-pressed="false">
+          <svg class="ic s" aria-hidden="true"><use href="#i-table-2"/></svg><span>表格</span>
+        </button>
+      </div>
+    </div>
+    <p class="sub" style="font-size:12px;color:var(--faint);margin:-28px 0 22px;max-width:62ch">
+      七项量纲差异极大，各自独立纵轴，绝不共用双轴。虚线为阈值参考线。悬停或聚焦后用左右方向键逐点读数，完整数值见表格视图。
+      <span id="rangeInfo" style="color:var(--dim)"></span>
+    </p>
+    <div class="ribbons" id="ribbons"></div>
+    <div class="tblwrap" id="tblWrap" hidden><table id="tbl"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- ── 04 CONTROL ── -->
+  <section class="pad">
+    <div class="shead">
+      <span class="snum">04</span><h2>控制与阈值</h2>
+      <p class="sub">阈值经云端下发，设备实时生效；掉电重启后由设备主动取回，不会退回默认值。</p>
+    </div>
+    <div class="duo">
+      <div class="panel">
+        <h3><svg class="ic" aria-hidden="true"><use href="#i-cpu"/></svg>设备控制</h3>
+        <p class="lead">云端对同一设备限频，4 秒内多次下发会被拒绝。</p>
+        <div class="act">
+          <svg class="ic l" aria-hidden="true"><use href="#i-sparkles"/></svg>
+          <div><b>RGB 灯</b><small>R / G / B</small></div>
+          <div class="btns">
+            <button class="ghost" data-ctl="R" data-val="1" style="color:#FF6B6B">R 开</button>
+            <button class="ghost" data-ctl="R" data-val="0">R 关</button>
+            <button class="ghost" data-ctl="G" data-val="1" style="color:#34D399">G 开</button>
+            <button class="ghost" data-ctl="G" data-val="0">G 关</button>
+            <button class="ghost" data-ctl="B" data-val="1" style="color:#38BDF8">B 开</button>
+            <button class="ghost" data-ctl="B" data-val="0">B 关</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3><svg class="ic" aria-hidden="true"><use href="#i-sliders-horizontal"/></svg>报警阈值</h3>
+        <p class="lead">留空表示本次不修改该项。保存后仅下发填写过的字段。</p>
+        <form id="thForm" novalidate>
+          <div class="esum" id="esum" role="alert" tabindex="-1" aria-labelledby="esumT">
+            <h4 id="esumT"><svg class="ic s" aria-hidden="true"><use href="#i-triangle-alert"/></svg>请修正以下输入</h4>
+            <ul id="esumL"></ul>
+          </div>
+          <div class="grid-f" id="fields"></div>
+          <div style="display:flex;gap:9px;margin-top:24px;flex-wrap:wrap">
+            <button type="submit" class="ghost solid" id="thSave">
+              <svg class="ic s" aria-hidden="true"><use href="#i-arrow-right"/></svg><span>保存并下发</span></button>
+            <button type="button" class="ghost" id="thReset">
+              <svg class="ic s" aria-hidden="true"><use href="#i-rotate-ccw"/></svg><span>还原</span></button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 05 AI ── -->
+  <section class="pad">
+    <div class="shead">
+      <span class="snum">05</span><h2>AI 分析</h2>
+      <p class="sub">把当前读数、阈值与所选窗口的统计交给模型，生成环境评估与建议。</p>
+    </div>
+    <div class="ai-bar">
+      <span class="sel"><select id="aiMin">
+        <option value="30">30 分钟窗口</option><option value="60" selected>1 小时窗口</option>
+        <option value="180">3 小时窗口</option></select><svg class="ic" aria-hidden="true"><use href="#i-chevron-down"/></svg></span>
+      <label class="sr" for="aiQ">追问</label>
+      <input id="aiQ" type="text" placeholder="可选追问，例如：现在适合上课吗">
+      <button id="aiGo" class="ghost solid">
+        <svg class="ic s" aria-hidden="true"><use href="#i-sparkles"/></svg><span>开始分析</span></button>
+    </div>
+    <div id="aiOut" class="ai-out idle" role="status" aria-live="polite">
+      <svg class="ic" aria-hidden="true"><use href="#i-sparkles"/></svg>
+      <span>推理模型通常需要 10 到 30 秒。结果为模型生成，请结合实际读数判断。</span>
+    </div>
+  </section>
+
+  <footer class="pad">
+    <svg class="ic s" aria-hidden="true"><use href="#i-cpu"/></svg>
+    <span>STM32F103 · ESP8266 · ThingsCloud</span>
+    <label for="api" style="margin-left:auto">后端</label>
+    <input id="api" spellcheck="false">
+    <button id="apiSave" class="ghost">应用</button>
+  </footer>
+</main>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite">
+  <svg class="ic s" aria-hidden="true"><use href="#i-circle-check"/></svg><span id="toastTxt"></span>
+</div>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── sensor model — mirrors firmware main.c ─────────────────── */
+const S = [
+  {k:'Temp',       lab:'温度',          en:'TEMPERATURE', u:'°C',  ic:'i-thermometer', th:'A_Temp',        cmp:'gte', max:99,   thL:'报警阈值', hint:'高于即报警'},
+  {k:'Humi',       lab:'湿度',          en:'HUMIDITY',    u:'%',   ic:'i-droplets',    th:'A_Hum',         cmp:'lte', max:99,   thL:'报警阈值', hint:'低于即报警'},
+  {k:'Pre',        lab:'气压',          en:'PRESSURE',    u:'hPa', ic:'i-gauge',       th:'A_Pre',         cmp:'gte', max:2000, thL:'报警阈值', hint:'高于即报警'},
+  {k:'GZ_Value',   lab:'光照',          en:'LIGHT',       u:'ADC', ic:'i-sun',         th:'A_GZ_Value',    cmp:null,  max:4095, thL:'窗帘阈值', hint:'高于即开帘，不报警'},
+  {k:'MQ2_Value',  lab:'烟雾',          en:'MQ2 SMOKE',   u:'ADC', ic:'i-flame',       th:'A_MQ2_Value',   cmp:'gte', max:4095, thL:'报警阈值', hint:'高于即报警'},
+  {k:'MQ7_Value',  lab:'一氧化碳',      en:'MQ7 CO',      u:'ADC', ic:'i-wind',        th:'A_MQ7_Value',   cmp:'gte', max:4095, thL:'报警阈值', hint:'高于即报警'},
+  {k:'MQ135_Value',lab:'空气质量',      en:'MQ135 AIR',   u:'ADC', ic:'i-leaf',        th:'A_MQ135_Value', cmp:'lte', max:4095, thL:'报警阈值', hint:'低于即报警'},
+];
+const ALARM = S.filter(s => s.cmp);                       // 6 sensors drive the buzzer
+const over = (s, d) => {
+  const v = d[s.k], t = d[s.th];
+  if (!s.cmp || v == null || t == null) return false;
+  return s.cmp === 'gte' ? v >= t : v <= t;
+};
+/* alarm proximity, normalised so 6 incomparable scales share one ring: 1.0 = at threshold */
+const risk = (s, d) => {
+  const v = d[s.k], t = d[s.th];
+  if (!s.cmp || v == null || t == null || !t || !v) return null;
+  return Math.max(0, Math.min(1.25, s.cmp === 'gte' ? v / t : t / v));
+};
+
+/* ── state ─────────────────────────────────────────────────── */
+let API = localStorage.getItem('cm_api') ||
+  (location.protocol === 'file:' ? 'http://localhost:8000' : location.origin);   // 由后端同源托管
+let devs = [], cur = null, rows = [], minutes = 60;
+let paused = false, tableView = false, thDirty = false;
+
+const ico = (id, c='ic') => `<svg class="${c}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const fmt = v => v == null ? '—' : (Number.isInteger(v) ? v : Math.round(v * 10) / 10);
+const hm  = ts => new Date(ts).toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+function toast(msg, ok = true) {
+  const t = $('#toast');
+  t.className = `toast on ${ok ? 'ok' : 'bad'}`;
+  t.querySelector('use').setAttribute('href', ok ? '#i-circle-check' : '#i-triangle-alert');
+  $('#toastTxt').textContent = msg;
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 3800);
+}
+async function api(p, o) {
+  const r = await fetch(API + p, {headers:{'Content-Type':'application/json'}, ...o});
+  const b = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(b.detail || `HTTP ${r.status}`);
+  return b;
+}
+
+/* ── spring integrator (physics, not easing curves) ────────── */
+function spring(el, get, set, {k = 170, d = 22} = {}) {
+  let cur = get(), vel = 0, target = cur, raf = 0;
+  const step = () => {
+    const a = (target - cur) * k - vel * d;
+    vel += a * (1/60); cur += vel * (1/60);
+    if (Math.abs(target - cur) < .004 && Math.abs(vel) < .004) { cur = target; vel = 0; raf = 0; set(cur); return; }
+    set(cur); raf = requestAnimationFrame(step);
+  };
+  return v => {
+    target = v;
+    if (RM) { cur = v; set(v); return; }
+    if (!raf) raf = requestAnimationFrame(step);
+  };
+}
+const springs = new Map();
+function animNum(el, val, dec = 0) {
+  if (val == null) { el.textContent = '—'; springs.delete(el); return; }
+  if (!springs.has(el)) {
+    let c = val;
+    springs.set(el, spring(el, () => c, v => { c = v; el.textContent = dec ? v.toFixed(dec) : Math.round(v); }));
+    el.textContent = dec ? val.toFixed(dec) : Math.round(val);
+  }
+  springs.get(el)(val);
+}
+
+/* ═══ generative field — driven by live data, not decoration ═══
+   Particle drift speed follows the highest alarm-proximity on the
+   board; hue shifts toward the alarm colour when a limit is crossed. */
+const cvs = $('#field'), ctx = cvs.getContext('2d');
+let W = 0, H = 0, parts = [], energy = .18, hot = 0;
+function sizeField() {
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cvs.width = W * dpr; cvs.height = H * dpr;
+  cvs.style.width = W + 'px'; cvs.style.height = H + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!parts.length)
+    parts = Array.from({length: 88}, () => ({x:Math.random()*W, y:Math.random()*H, s:.3+Math.random()*.9}));
+}
+const noise = (x, y, t) =>
+  Math.sin(x * .0021 + t) * 1.6 + Math.cos(y * .0026 - t * .7) * 1.6 + Math.sin((x + y) * .0013 + t * .45);
+let ft = 0, fieldRaf = 0;
+function fieldTick() {
+  fieldRaf = 0;
+  if (RM || paused) return;          // stop the loop outright; do not spin on a paused frame
+  fieldRaf = requestAnimationFrame(fieldTick);
+  ft += .0022;
+  ctx.fillStyle = 'rgba(6,7,10,.10)';
+  ctx.fillRect(0, 0, W, H);
+  const sp = .28 + energy * 1.5;
+  for (const p of parts) {
+    const a = noise(p.x, p.y, ft);
+    p.x += Math.cos(a) * sp * p.s; p.y += Math.sin(a) * sp * p.s;
+    if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+    if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+    ctx.fillStyle = hot
+      ? `rgba(255,107,107,${.05 + p.s * .10})`
+      : `rgba(56,189,248,${.035 + p.s * .075})`;
+    ctx.fillRect(p.x, p.y, 1.5, 1.5);
+  }
+}
+function fieldStart() { if (!RM && !paused && !fieldRaf) fieldRaf = requestAnimationFrame(fieldTick); }
+function fieldStop() { if (fieldRaf) { cancelAnimationFrame(fieldRaf); fieldRaf = 0; } }
+addEventListener('resize', sizeField); sizeField(); fieldStart();
+document.addEventListener('visibilitychange', () => document.hidden ? fieldStop() : fieldStart());
+
+/* ═══ charts — small multiples, one series each, never dual-axis ═══ */
+const P = {l:2, r:40, t:11, b:11}, CH = 62;
+function drawPlot(host, s, {spark = false} = {}) {
+  const w = Math.max(host.clientWidth || 260, 180), h = spark ? 30 : CH;
+  const pts = rows.map(r => r[s.k]).filter(v => v != null);
+  if (pts.length < 2) { host.innerHTML = `<svg viewBox="0 0 ${w} ${h}" height="${h}"></svg>`; return; }
+
+  const t = rows[rows.length-1][s.th];
+  const showT = !spark && t != null && t <= s.max * 1.05;
+  let lo = Math.min(...pts), hi = Math.max(...pts);
+  if (showT) { lo = Math.min(lo, t); hi = Math.max(hi, t); }
+  if (hi === lo) { hi = lo + 1; lo -= 1; }
+  const pd = (hi - lo) * .2; lo -= pd; hi += pd;
+
+  const pr = spark ? {l:1,r:5,t:3,b:3} : P;
+  const iw = w - pr.l - pr.r, ih = h - pr.t - pr.b;
+  const X = i => pr.l + i / (pts.length - 1) * iw;
+  const Y = v => pr.t + ih - (v - lo) / (hi - lo) * ih;
+  const line = pts.map((v,i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const last = pts[pts.length-1], lx = X(pts.length-1), ly = Y(last);
+  const bad = over(s, rows[rows.length-1]);
+  const gid = `g${spark ? 's' : 'r'}-${s.k}`;
+
+  host.innerHTML =
+`<svg viewBox="0 0 ${w} ${h}" height="${h}" role="presentation">
+  <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#38BDF8" stop-opacity=".2"/><stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+  </linearGradient></defs>
+  ${spark ? '' : `<line x1="${pr.l}" y1="${pr.t+ih}" x2="${pr.l+iw}" y2="${pr.t+ih}" stroke="rgba(255,255,255,.09)" stroke-width="1"/>`}
+  ${showT ? `<line x1="${pr.l}" y1="${Y(t).toFixed(1)}" x2="${pr.l+iw}" y2="${Y(t).toFixed(1)}"
+      stroke="#FBBF24" stroke-width="1.2" stroke-dasharray="4 4" opacity=".8"/>
+    <text x="${pr.l+iw+5}" y="${(Y(t)+3.4).toFixed(1)}" fill="#FBBF24" font-size="9.5"
+      font-family="JetBrains Mono,monospace">${fmt(t)}</text>` : ''}
+  <polygon points="${pr.l},${(pr.t+ih).toFixed(1)} ${line} ${lx.toFixed(1)},${(pr.t+ih).toFixed(1)}" fill="url(#${gid})"/>
+  <polyline points="${line}" fill="none" stroke="#38BDF8" stroke-width="${spark ? 1.4 : 2}" stroke-linejoin="round" stroke-linecap="round"/>
+  ${spark ? '' : `<line data-x x1="0" y1="${pr.t}" x2="0" y2="${pr.t+ih}" stroke="#98A1B3" stroke-width="1" opacity="0"/>
+  <circle data-h cx="0" cy="0" r="4" fill="#38BDF8" stroke="#06070A" stroke-width="2" opacity="0"/>`}
+  <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="${spark ? 2.4 : 4}"
+    fill="${bad ? '#FF6B6B' : '#38BDF8'}" stroke="#06070A" stroke-width="2"/>
+  ${spark ? '' : `<rect data-hit x="${pr.l}" y="0" width="${iw}" height="${h}" fill="transparent" style="cursor:crosshair"/>`}
+</svg>`;
+  if (spark) return;
+
+  host.setAttribute('aria-label',
+    `${s.lab}趋势，${pts.length} 个采样点，最低 ${fmt(Math.min(...pts))}，最高 ${fmt(Math.max(...pts))}，` +
+    `当前 ${fmt(last)} ${s.u}${showT ? `，${s.thL} ${fmt(t)}` : ''}。完整数值见表格视图。`);
+
+  const svg = host.querySelector('svg'), tip = host.parentElement.querySelector('.tip');
+  const cx = svg.querySelector('[data-x]'), hv = svg.querySelector('[data-h]');
+  let idx = -1;
+  const show = i => {
+    if (i < 0 || i >= pts.length) return;
+    idx = i;
+    const px = X(i), py = Y(pts[i]);
+    cx.setAttribute('x1', px); cx.setAttribute('x2', px); cx.setAttribute('opacity', '.4');
+    hv.setAttribute('cx', px); hv.setAttribute('cy', py); hv.setAttribute('opacity', '1');
+    tip.innerHTML = '<span class="k"></span><span class="v"></span><span class="t"></span>';
+    tip.querySelector('.v').textContent = `${fmt(pts[i])} ${s.u}`;
+    tip.querySelector('.t').textContent = hm(rows[i].ts);
+    tip.classList.add('on');
+    tip.style.left = `${px / w * host.clientWidth}px`;
+    tip.style.top = `${py}px`;
+  };
+  const hide = () => { idx = -1; cx.setAttribute('opacity','0'); hv.setAttribute('opacity','0'); tip.classList.remove('on'); };
+  svg.addEventListener('pointermove', e => {
+    const b = svg.getBoundingClientRect();
+    const vx = (e.clientX - b.left) / b.width * w;
+    show(Math.max(0, Math.min(pts.length-1, Math.round((vx - pr.l) / iw * (pts.length-1)))));
+  });
+  svg.addEventListener('pointerleave', hide);
+  host.addEventListener('blur', hide);
+  host.onkeydown = e => {
+    if (e.key === 'ArrowRight') { show(idx < 0 ? pts.length-1 : Math.min(pts.length-1, idx+1)); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft') { show(idx < 0 ? pts.length-1 : Math.max(0, idx-1)); e.preventDefault(); }
+    else if (e.key === 'Escape') hide();
+  };
+}
+
+/* ── radial risk ring ──────────────────────────────────────── */
+function drawDial(d) {
+  const C = 200, R0 = 58, gap = 22, A0 = -Math.PI * .75, SW = Math.PI * 1.5;
+  const arc = (r, f) => {
+    f = Math.max(0, Math.min(1, f));
+    const a1 = A0 + SW * f, lg = SW * f > Math.PI ? 1 : 0;
+    return `M ${(C + r*Math.cos(A0)).toFixed(1)} ${(C + r*Math.sin(A0)).toFixed(1)} ` +
+           `A ${r} ${r} 0 ${lg} 1 ${(C + r*Math.cos(a1)).toFixed(1)} ${(C + r*Math.sin(a1)).toFixed(1)}`;
+  };
+  let out = '', leg = '', any = false;
+  ALARM.forEach((s, i) => {
+    const r = R0 + i * gap, v = risk(s, d), bad = over(s, d);
+    const col = bad ? '#FF6B6B' : '#38BDF8', op = bad ? 1 : .42 + i * .1;
+    if (v != null) any = true;
+    out += `<path d="${arc(r,1)}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6" stroke-linecap="round"/>`;
+    if (v != null) {
+      out += `<path d="${arc(r, v)}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" opacity="${op}"/>`;
+      const ae = A0 + SW * Math.min(v, 1);
+      out += `<circle cx="${(C + r*Math.cos(ae)).toFixed(1)}" cy="${(C + r*Math.sin(ae)).toFixed(1)}" r="3.4"
+        fill="${col}" stroke="#06070A" stroke-width="2"/>`;
+    }
+    leg += `<div><span class="sw" style="background:${col};opacity:${op}"></span>` +
+           `<span class="nm">${s.lab}</span>` +
+           `<span class="pc">${v == null ? '—' : Math.round(v * 100) + '%'}</span>` +
+           (v == null ? ico('i-triangle-alert','ic dim')
+                      : bad ? ico('i-triangle-alert','ic bad') : ico('i-circle-check','ic ok')) + `</div>`;
+  });
+  const hits = ALARM.filter(s => over(s, d)).length;
+  out += `<text x="${C}" y="${C-2}" text-anchor="middle" fill="${hits ? '#FF6B6B' : '#F4F6FB'}"
+      font-size="40" font-family="Space Grotesk,sans-serif" font-weight="500">${any ? hits : '—'}</text>
+    <text x="${C}" y="${C+20}" text-anchor="middle" fill="#646C7E" font-size="9.5"
+      letter-spacing="2.5" font-family="JetBrains Mono,monospace">越限项</text>`;
+  $('#dial').innerHTML =
+    `<title id="dialT">六项报警指标的风险环，当前 ${any ? hits : 0} 项越限，各项百分比见下方图例</title>` + out;
+  $('#dleg').innerHTML = leg;
+}
+
+/* ── render ────────────────────────────────────────────────── */
+function buildStrip() {
+  $('#strip').innerHTML = S.filter(s => s.k !== 'Temp').map(s =>
+    `<div><span class="l">${ico(s.ic,'ic')}${s.lab}</span>
+      <span class="n" data-strip="${s.k}">—</span><u>${s.u}</u></div>`).join('');
+  $('#marqT').innerHTML = Array(2).fill(S.map(s => `${s.en}<i>/</i>`).join('')).join('');
+}
+function buildBento() {
+  const span = ['w4','w4','w4','w3','w3','w3','w3'];
+  $('#bento').innerHTML = S.map((s,i) =>
+    `<article class="cell ${span[i]} rise">
+      <div class="cell-h">${ico(s.ic,'ic s')}<span>${s.lab}</span><span class="idx">${String(i+1).padStart(2,'0')}</span></div>
+      <div class="cell-v"><b data-v="${s.k}">—</b><u>${s.u}</u></div>
+      <div class="meter" data-m="${s.k}"><i></i><b style="left:100%"></b></div>
+      <div class="spark" data-sp="${s.k}"></div>
+      <div class="cell-f" data-f="${s.k}"></div>
+    </article>`).join('');
+}
+function buildRibbons() {
+  $('#ribbons').innerHTML = S.map(s =>
+    `<div class="rib">
+      <div class="rib-l">${ico(s.ic,'ic')}<div><b>${s.lab}</b><small>${s.en}</small></div></div>
+      <div style="position:relative">
+        <div class="plot" tabindex="0" role="img" data-plot="${s.k}" aria-label="${s.lab}趋势图"></div>
+        <div class="tip"></div>
+      </div>
+      <div class="rib-r"><div class="now" data-now="${s.k}">—<u>${s.u}</u></div><div class="mm" data-mm="${s.k}"></div></div>
+    </div>`).join('');
+}
+function renderLive(dev) {
+  const d = dev.data;
+  animNum($('#heroVal'), d.Temp ?? null);
+  $('#heroHum').textContent = d.Humi != null ? `${d.Humi} %` : '—';
+  $('#heroN').textContent = rows.length ? `${rows.length} pts` : '—';
+  $('#devName').textContent = dev.name;
+
+  S.filter(s => s.k !== 'Temp').forEach(s => {
+    const el = $(`[data-strip="${s.k}"]`); if (el) animNum(el, d[s.k] ?? null);
+  });
+
+  S.forEach(s => {
+    const v = d[s.k], t = d[s.th], bad = over(s, d), rk = risk(s, d);
+    const b = $(`[data-v="${s.k}"]`); if (b) { animNum(b, v ?? null); b.style.color = bad ? 'var(--bad)' : ''; }
+    const m = $(`[data-m="${s.k}"]`);
+    if (m) { m.classList.toggle('hot', bad); m.querySelector('i').style.width = rk == null ? '0' : `${Math.min(rk,1.25)/1.25*100}%`; }
+    const f = $(`[data-f="${s.k}"]`);
+    if (f) f.innerHTML = !s.cmp
+      ? `<span class="chip dim">${ico('i-blinds','ic s')}窗帘触发</span><span class="lim">${s.thL} ${fmt(t)}</span>`
+      : (t == null ? `<span class="chip dim">${ico('i-triangle-alert','ic s')}云端未设 · 设备用默认</span>`
+        : bad ? `<span class="chip bad">${ico('i-triangle-alert','ic s')}越限</span><span class="lim">${s.hint} ${fmt(t)}</span>`
+              : `<span class="chip ok">${ico('i-circle-check','ic s')}正常</span><span class="lim">${s.hint} ${fmt(t)}</span>`);
+  });
+
+  drawDial(d);
+  const hits = ALARM.filter(s => over(s, d));
+  energy = Math.max(.1, ...ALARM.map(s => risk(s, d) ?? .1));
+  hot = hits.length ? 1 : 0;
+
+  const st = $('#state');
+  if (!dev.online) {
+    st.className = 'state off'; st.querySelector('use').setAttribute('href','#i-wifi-off');
+    $('#stateT').textContent = '设备离线';
+    $('#stateS').textContent = '超过 30 秒未收到上报，以下为最后一次已知数据';
+  } else if (hits.length) {
+    st.className = 'state bad'; st.querySelector('use').setAttribute('href','#i-triangle-alert');
+    $('#stateT').textContent = '环境告警 · 蜂鸣器已响';
+    $('#stateS').textContent = `越限：${hits.map(s => s.lab).join('、')}`;
+  } else {
+    st.className = 'state ok'; st.querySelector('use').setAttribute('href','#i-circle-check');
+    $('#stateT').textContent = '环境正常';
+    $('#stateS').textContent = '六项指标均在阈值内，蜂鸣器静音';
+  }
+  document.querySelectorAll('.cell,.strip').forEach(e => e.classList.toggle('dim-refresh', !dev.online));
+}
+function renderTrend() {
+  S.forEach(s => {
+    const host = $(`[data-plot="${s.k}"]`); if (host) drawPlot(host, s);
+    const sp = $(`[data-sp="${s.k}"]`);     if (sp) drawPlot(sp, s, {spark:true});
+    const pts = rows.map(r => r[s.k]).filter(v => v != null);
+    const now = $(`[data-now="${s.k}"]`), mm = $(`[data-mm="${s.k}"]`);
+    if (now) now.innerHTML = `${pts.length ? fmt(pts[pts.length-1]) : '—'}<u>${s.u}</u>`;
+    if (mm) mm.textContent = pts.length ? `${fmt(Math.min(...pts))} – ${fmt(Math.max(...pts))}` : '';
+  });
+  if (tableView) renderTable();
+}
+function renderTable() {
+  const tb = $('#tbl');
+  tb.tHead.innerHTML = `<tr><th>时间</th>${S.map(s => `<th>${s.lab} ${s.u}</th>`).join('')}</tr>`;
+  const v = rows.slice(-90).reverse();
+  tb.tBodies[0].innerHTML = v.map(r =>
+    `<tr><td>${hm(r.ts)}</td>${S.map(s => {
+      const bad = over(s, r);
+      return `<td style="${bad ? 'color:var(--bad)' : ''}">${fmt(r[s.k])}${bad ? ' !' : ''}</td>`;
+    }).join('')}</tr>`).join('');
+}
+
+/* ── threshold form (blank = leave unchanged) ──────────────── */
+function buildForm() {
+  $('#fields').innerHTML = S.map(s => `
+    <div class="f">
+      <label for="f-${s.th}">${s.lab}</label>
+      <input id="f-${s.th}" type="number" inputmode="numeric" min="0" max="${s.max}" step="1"
+             placeholder="—" aria-describedby="h-${s.th} e-${s.th}">
+      <span class="hint" id="h-${s.th}">${s.hint} · 0–${s.max}</span>
+      <span class="err" id="e-${s.th}">${ico('i-triangle-alert','ic s')}<span data-msg></span></span>
+    </div>`).join('');
+  $('#fields').addEventListener('input', e => {
+    thDirty = true;
+    const f = e.target.closest('.f'); if (!f) return;
+    f.querySelector('.err').classList.remove('on');
+    e.target.setAttribute('aria-invalid','false');
+  });
+}
+function fillForm(d) {
+  if (thDirty) return;
+  S.forEach(s => { const i = $(`#f-${s.th}`); if (i && d[s.th] != null) i.value = d[s.th]; });
+}
+function validate() {
+  const bad = [], body = {};
+  S.forEach(s => {
+    const i = $(`#f-${s.th}`), err = i.closest('.f').querySelector('.err'), raw = i.value.trim();
+    let msg = '';
+    if (raw === '') { err.classList.remove('on'); i.setAttribute('aria-invalid','false'); return; }
+    if (!/^\d+$/.test(raw)) msg = '只能填整数';
+    else if (+raw < 0 || +raw > s.max) msg = `需在 0 到 ${s.max} 之间`;
+    if (msg) {
+      bad.push({id:`f-${s.th}`, lab:s.lab, msg});
+      err.querySelector('[data-msg]').textContent = msg;
+      err.classList.add('on'); i.setAttribute('aria-invalid','true');
+    } else { err.classList.remove('on'); i.setAttribute('aria-invalid','false'); body[s.th] = +raw; }
+  });
+  const sum = $('#esum');
+  if (bad.length) {
+    $('#esumL').innerHTML = bad.map(b => `<li><a href="#${b.id}">${b.lab}：${b.msg}</a></li>`).join('');
+    sum.classList.add('on'); sum.focus(); return null;
+  }
+  sum.classList.remove('on');
+  if (!Object.keys(body).length) { toast('没有填写任何阈值', false); return null; }
+  return body;
+}
+
+/* ── data flow ─────────────────────────────────────────────── */
+async function poll() {
+  try {
+    const list = await api('/devices');
+    devs = list;
+    if (!list.length) return;
+    if (!cur || !list.some(d => d.id === cur)) {
+      cur = list[0].id;
+      $('#dev').innerHTML = '';
+      list.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.name; $('#dev').appendChild(o); });
+      $('#dev').value = cur;
+      await loadHistory();
+    }
+    const dev = list.find(d => d.id === cur);
+    const L = $('#live');
+    L.className = `live ${dev.online ? 'on' : 'off'}`;
+    L.querySelector('#liveTxt').textContent = dev.online
+      ? `LIVE ${dev.data.ts ? hm(dev.data.ts) : ''}` : '数据陈旧';
+    renderLive(dev);
+    fillForm(dev.data);
+  } catch (e) {
+    $('#live').className = 'live off';
+    $('#liveTxt').textContent = '后端未连接';
+    const st = $('#state'); st.className = 'state off';
+    st.querySelector('use').setAttribute('href','#i-wifi-off');
+    $('#stateT').textContent = '无法连接后端';
+    $('#stateS').textContent = `请确认 ${API} 上的服务已启动`;
+  }
+}
+async function loadHistory() {
+  if (!cur) return;
+  try {
+    const all = await api(`/devices/${cur}/history?limit=1000`);
+    const since = Date.now() - minutes * 60000;
+    rows = all.filter(r => r.ts >= since);
+    if (rows.length < 2) rows = all.slice(-2);
+    $('#rangeInfo').textContent = rows.length
+      ? `当前窗口 ${rows.length} 个采样点，自 ${hm(rows[0].ts)} 起。` : '窗口内暂无数据。';
+    renderTrend();
+  } catch (e) { $('#rangeInfo').textContent = '历史数据暂不可用。'; }
+}
+
+/* ── wiring ────────────────────────────────────────────────── */
+buildStrip(); buildBento(); buildRibbons(); buildForm();
+$('#api').value = API;
+$('#apiSave').onclick = () => {
+  API = $('#api').value.trim().replace(/\/$/, '');
+  localStorage.setItem('cm_api', API); toast('后端地址已更新'); cur = null; poll();
+};
+$('#dev').onchange = async e => { cur = e.target.value; thDirty = false; await loadHistory(); poll(); };
+$('#range').onchange = e => { minutes = +e.target.value; loadHistory(); };
+$('#pause').onclick = () => {
+  paused = !paused;
+  const b = $('#pause');
+  b.setAttribute('aria-pressed', String(paused));
+  b.querySelector('use').setAttribute('href', paused ? '#i-play' : '#i-pause');
+  b.querySelector('span').textContent = paused ? '继续' : '暂停';
+  $('#marq').classList.toggle('hold', paused);
+  paused ? fieldStop() : fieldStart();
+  toast(paused ? '已暂停自动刷新' : '已恢复自动刷新');
+};
+$('#viewBtn').onclick = () => {
+  tableView = !tableView;
+  const b = $('#viewBtn');
+  b.setAttribute('aria-pressed', String(tableView));
+  b.querySelector('use').setAttribute('href', tableView ? '#i-chart-line' : '#i-table-2');
+  b.querySelector('span').textContent = tableView ? '图表' : '表格';
+  $('#ribbons').hidden = tableView; $('#tblWrap').hidden = !tableView;
+  if (tableView) renderTable(); else renderTrend();
+};
+document.querySelectorAll('[data-ctl]').forEach(b => b.onclick = async () => {
+  if (!cur) return;
+  b.disabled = true;
+  try {
+    await api(`/devices/${cur}/control`, {method:'POST', body:JSON.stringify({[b.dataset.ctl]: b.dataset.val === '1'})});
+    toast(`已下发 ${b.closest('.act').querySelector('b').textContent} ${b.textContent}`);
+  } catch (e) { toast(`下发失败：${e.message}`, false); }
+  finally { setTimeout(() => b.disabled = false, 1300); }
+});
+$('#thForm').onsubmit = async e => {
+  e.preventDefault();
+  const body = validate(); if (!body) return;
+  const btn = $('#thSave'); btn.disabled = true;
+  try {
+    await api(`/devices/${cur}/thresholds`, {method:'PUT', body:JSON.stringify(body)});
+    thDirty = false; toast('阈值已下发，设备实时生效'); poll();
+  } catch (e) { toast(`下发失败：${e.message}`, false); }
+  finally { btn.disabled = false; }
+};
+$('#thReset').onclick = () => {
+  thDirty = false;
+  const d = devs.find(x => x.id === cur); if (d) fillForm(d.data);
+  $('#esum').classList.remove('on');
+  document.querySelectorAll('.f .err').forEach(x => x.classList.remove('on'));
+};
+$('#aiGo').onclick = async () => {
+  if (!cur) return;
+  const out = $('#aiOut'), btn = $('#aiGo');
+  btn.disabled = true; out.className = 'ai-out idle'; out.setAttribute('aria-busy','true');
+  out.innerHTML = '<span class="spin" aria-hidden="true"></span><span>正在分析，推理模型通常需要 10 到 30 秒…</span>';
+  try {
+    const r = await api(`/devices/${cur}/analyze`, {method:'POST',
+      body:JSON.stringify({minutes:+$('#aiMin').value, question:$('#aiQ').value.trim()})});
+    out.className = 'ai-out'; out.textContent = r.analysis;   // model output is data, never markup
+  } catch (e) {
+    out.className = 'ai-out idle'; out.textContent = `分析失败：${e.message}`;
+  } finally { out.setAttribute('aria-busy','false'); btn.disabled = false; }
+};
+
+/* scroll progress + staggered entrance */
+addEventListener('scroll', () => {
+  const m = document.documentElement.scrollHeight - innerHeight;
+  $('#prog').style.width = `${m > 0 ? scrollY / m * 100 : 0}%`;
+}, {passive:true});
+if (!RM) {
+  const io = new IntersectionObserver((es) => es.forEach((en, i) => {
+    if (en.isIntersecting) { setTimeout(() => en.target.classList.add('in'), i * 55); io.unobserve(en.target); }
+  }), {rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rise').forEach(e => io.observe(e));
+} else document.querySelectorAll('.rise').forEach(e => e.classList.add('in'));
+
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (!tableView) renderTrend(); }, 200); });
+
+poll();
+setInterval(() => { if (!paused) poll(); }, 3000);
+setInterval(() => { if (!paused) loadHistory(); }, 15000);
+</script>
+</body>
+</html>

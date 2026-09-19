@@ -1,0 +1,17 @@
+# 1Panel: 容器 > 编排 > 创建, 粘贴本文件, 在"环境变量"里填 backend/.env.example 中的各项
+services:
+  classroom:
+    image: ghcr.io/ailixiya1314520/code:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      TC_API: ${TC_API:-https://gz-5-api.iot-api.com}
+      TC_PROJECT_KEY: ${TC_PROJECT_KEY}
+      TC_VIEW_URL: ${TC_VIEW_URL:-wss://gz-5-api.iot-api.com/mqtt/app}
+      TC_VIEW_KEY: ${TC_VIEW_KEY}
+      TC_VIEW_SECRET: ${TC_VIEW_SECRET}
+      AI_BASE: ${AI_BASE:-https://new.xkool.cfd/v1}
+      AI_KEY: ${AI_KEY}
+      AI_MODEL: ${AI_MODEL:-deepseek-v4-flash}
+      DEVICES: ${DEVICES}

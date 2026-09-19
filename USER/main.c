@@ -43,6 +43,9 @@ u32 STM32_xx2 = 0X132D13;
  * ================================================================== */
 #define OLED_TEST_ONLY  0
 
+/* 1 = 板上只有 DHT11, 气压/光照/MQ 三路给假数据; 传感器接上后改 0 */
+#define SIM_SENSORS     1
+
 u8  buff[30];
 u8  count;
 u8  mode = 0;               /* 0 = auto, 1 = manual (cloud/app) */
@@ -61,8 +64,8 @@ u16 m2_value;                      /* MQ2              */
 u16 m7_value;                      /* MQ7              */
 u16 m135_value;                     /* MQ135            */
 
-u16 A_DHT11_Temp = 10;      /* thresholds */
-u16 A_DHT11_Hum  = 12;
+u16 A_DHT11_Temp = 35;      /* thresholds: defaults until the cloud pushes/returns them */
+u16 A_DHT11_Hum  = 20;
 u16 A_pre        = 1500;
 u16 A_gz_value   = 1000;
 u16 A_m2_value   = 3500;
@@ -93,13 +96,12 @@ void Cloud_Init(void)
     {
         printf("cloud connect failed, retry in 3s\r\n");
         OLED_ShowString(2, 0, "retry...", 16);
-        BEEP = 0;  delay_ms(200);   /* 低触发: 每轮重试短响0.2s 提示"联网失败" */
-        BEEP = 1;
-        delay_ms(2800);
+        delay_ms(3000);
     }
 
     OLED_ShowString(2, 0, "cloud ok!     ", 16);
     delay_ms(500);
+    OLED_Clear();
 }
 
 /**********************************************************************
@@ -138,22 +140,13 @@ void Cloud_DownlinkTask(void)
     if (!ThingsCloud_Poll())
         return;
 
-    if (gTcCmd.ledUpdate)
+    if (gTcCmd.rgbUpdate)
     {
-        gTcCmd.ledUpdate = 0;
-        mode = 1;                                   /* switch to manual */
-        LED0 = gTcCmd.led ? 0 : 1;                  /* LED0 low = on    */
-        printf("cloud LED = %d\r\n", gTcCmd.led);
-    }
-
-    if (gTcCmd.curtainUpdate)
-    {
-        gTcCmd.curtainUpdate = 0;
-        mode = 1;                                   /* switch to manual */
-        curtain_flag       = gTcCmd.curtain;
-        last_curtain_flag  = gTcCmd.curtain;
-        BUJING_Cotrol(gTcCmd.curtain, 3, 270);      /* drive the stepper */
-        printf("cloud Curtain = %d\r\n", gTcCmd.curtain);
+        gTcCmd.rgbUpdate = 0;
+        RGB_R = gTcCmd.r;
+        RGB_G = gTcCmd.g;
+        RGB_B = gTcCmd.b;
+        printf("cloud RGB = %d%d%d\r\n", gTcCmd.r, gTcCmd.g, gTcCmd.b);
     }
 }
 
@@ -272,9 +265,13 @@ int main(void)
     uart_init(115200);                              /* debug log */
     delay_init();
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+#if !SIM_SENSORS
     Adc1_Channe_Init();
+#endif
     KEY_Init();
+#if !SIM_SENSORS
     bmp280Init();
+#endif
     LED_Init();
     OLED_Init();
     OLED_Clear();
@@ -284,22 +281,6 @@ int main(void)
         printf("DHT11 not detected! check DATA->PA11, VCC, GND\r\n");
     else
         printf("DHT11 ok\r\n");
-
-    /* ---- 蜂鸣器开机自检: 响0.5s停0.5s x4, LED0(PB0) 同步闪烁作参照 ----
-     * 在 Cloud_Init 阻塞联网之前执行, 用来区分软件/硬件问题:
-     *   LED闪 + 蜂鸣器响 -> PA1 接线与极性正确
-     *   LED闪 + 不响     -> PA1 信号没到蜂鸣器(查线/模块VCC/触发电平跳线)
-     *   LED不闪          -> 程序没跑到这(重新 Rebuild + Download 烧录) */
-    {
-        u8 i;
-        for (i = 0; i < 4; i++)
-        {
-            BEEP = 0;  LED0 = 0;   /* 低触发: 拉低响; LED0 低电平亮 */
-            delay_ms(500);
-            BEEP = 1;  LED0 = 1;   /* 拉高停; LED0 灭 */
-            delay_ms(500);
-        }
-    }
 
     Cloud_Init();
 
@@ -326,29 +307,21 @@ int main(void)
         }
 
         /* ---- alarm: 三引脚有源蜂鸣器, 低电平触发(BEEP=0 响, BEEP=1 停) ----
-         * 固定周期: 响2s -> 停5s -> 循环
-         * 主循环 ~100ms 节拍: 20拍=2s响, 50拍=5s停 */
-        static u8  alarmSt  = 0;   /* 0=响铃中, 1=静默中 */
-        static u16 alarmCnt = 20;  /* 上电先响2s */
+         * 任一阈值越限: 响2s -> 停5s 循环; 全部正常: 静音
+         * 主循环 ~100ms 节拍: 20拍=2s响, 70拍=一个周期 */
+        static u8 alarmCnt = 0;
 
-        if (alarmSt == 0)
+        if (DHT11_Temp >= A_DHT11_Temp || DHT11_Hum <= A_DHT11_Hum ||
+            Pre >= A_pre || m135_value <= A_m135_value ||
+            m2_value >= A_m2_value || m7_value >= A_m7_value)
         {
-            BEEP = 0;              /* 低触发: 拉低响 */
-            if (--alarmCnt == 0)
-            {
-                BEEP     = 1;      /* 拉高停 */
-                alarmCnt = 50;      /* 停 5s (50 * 100ms) */
-                alarmSt  = 1;
-            }
+            if (++alarmCnt > 70) alarmCnt = 1;
+            BEEP = (alarmCnt <= 20) ? 0 : 1;
         }
         else
         {
-            if (--alarmCnt == 0)
-            {
-                BEEP     = 0;      /* 拉低响 */
-                alarmCnt = 20;     /* 响 2s (20 * 100ms) */
-                alarmSt  = 0;
-            }
+            alarmCnt = 0;
+            BEEP = 1;
         }
 
         key_value = KEY_Scan(0);
@@ -380,12 +353,9 @@ int main(void)
             sprintf((char*)buff, ":%4dppm", gz_value);
             OLED_ShowString(64, 4, (char*)buff, 16);
 
-            OLED_ShowCHinese(0, 6, 9);
-            OLED_ShowCHinese(16, 6, 10);
-            OLED_ShowCHinese(32, 6, 11);
-            OLED_ShowCHinese(48, 6, 12);
-            sprintf((char*)buff, ":%4dppm", m135_value);
-            OLED_ShowString(64, 6, (char*)buff, 16);
+            /* alarm thresholds (cloud-set): alarm when T >= or H <= */
+            sprintf((char*)buff, "T>=%2dC H<=%2d%%", A_DHT11_Temp, A_DHT11_Hum);
+            OLED_ShowString(0, 6, (char*)buff, 16);
         }
         else if (display_contrl % 2 == 1 && t >= 10)
         {
@@ -581,7 +551,6 @@ void Canshu_Change(u8 key)
  **********************************************************************/
 void Get_Data(u16 count)
 {
-    static float bmp280_press, bmp280;
     static u8 dht11Tick = 0;
 
     /* DHT11 needs >= 1s between two reads */
@@ -600,13 +569,27 @@ void Get_Data(u16 count)
         }
     }
 
-    bmp280GetData(&bmp280_press, &bmp280, &bmp280);
-    Pre = bmp280_press;
-
+#if SIM_SENSORS
+    {
+        static u8 sim;          /* 小幅抖动, 看起来像真读数; 光照压在阈值 1000 以下, 免得空转步进电机 */
+        sim++;
+        Pre        = 1010 + (sim & 7);
+        gz_value   = 600  + (sim & 63);
+        m2_value   = 200  + (sim & 31);
+        m7_value   = 150  + (sim & 15);
+        m135_value = 3000 + (sim & 31);   /* 低=空气差, 阈值 500 以下才报警 */
+    }
+#else
+    {
+        static float bmp280_press, bmp280;
+        bmp280GetData(&bmp280_press, &bmp280, &bmp280);
+        Pre = bmp280_press;
+    }
     gz_value   = 4096 - get_Adc_Value(0x04);
     m2_value   = get_Adc_Value(0x07);
     m7_value   = get_Adc_Value(0x05);
     m135_value = 4096 - get_Adc_Value(0x06);
+#endif
 }
 
 /**********************************************************************
